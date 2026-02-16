@@ -151,7 +151,17 @@ const alimentos = {
 // ===============================
 // MOSTRAR CATEGORÍAS
 // ===============================
+function actualizarResumenInicio(){
+    const box = document.getElementById("resumenDiario");
 
+    box.innerHTML = `
+        <h3>📊 Resumen Diario</h3>
+        Calorías: ${datosHoy.calorias} / ${metaCalorias} <br>
+        Proteína: ${datosHoy.proteina}g / ${metaProteina}g <br>
+        Carbohidratos: ${datosHoy.carbs}g <br>
+        Grasas: ${datosHoy.grasas}g
+    `;
+}
 function cargarNutricion(){
     const cont = document.getElementById("nutricionContenido");
 
@@ -207,13 +217,14 @@ function agregarAlimento(tipo,nombre){
     localStorage.setItem("datosHoy", JSON.stringify(datosHoy));
 
     cargarNutricion();
-}
+actualizarResumenInicio();
 
 // ===============================
 // INICIALIZAR
 // ===============================
 
 cargarNutricion();
+actualizarResumenInicio();;
 
 </script>
 
