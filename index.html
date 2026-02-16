@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Fitness</title>
+<title>Elite Fitness Pro</title>
 
 <style>
-
 *{
 margin:0;
 padding:0;
@@ -18,27 +17,6 @@ body{
 background:#000;
 color:white;
 min-height:100vh;
-overflow-x:hidden;
-}
-
-/* Fondo animado sutil dorado */
-body::before{
-content:"";
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:
-radial-gradient(circle at 30% 30%,rgba(212,175,55,0.08),transparent 40%),
-radial-gradient(circle at 70% 70%,rgba(212,175,55,0.05),transparent 40%);
-animation:moveBg 6s infinite alternate ease-in-out;
-z-index:-1;
-}
-
-@keyframes moveBg{
-0%{transform:translateY(0px);}
-100%{transform:translateY(-15px);}
 }
 
 .container{
@@ -48,63 +26,50 @@ padding:20px;
 }
 
 .header{
-text-align:center;
-margin-bottom:25px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
 }
 
 .header h1{
 color:#d4af37;
-letter-spacing:2px;
-font-size:22px;
+font-size:18px;
+}
+
+select{
+background:#111;
+color:#d4af37;
+border:1px solid #d4af37;
+padding:5px;
+border-radius:8px;
 }
 
 .card{
 background:#111;
-border-radius:15px;
-padding:18px;
-margin-bottom:18px;
 border:1px solid rgba(212,175,55,0.3);
+border-radius:15px;
+padding:15px;
+margin-bottom:15px;
 }
 
 .title{
-font-size:14px;
+font-size:13px;
 color:#aaa;
-margin-bottom:8px;
+margin-bottom:5px;
 }
 
 .big{
-font-size:26px;
+font-size:20px;
 color:#d4af37;
 font-weight:bold;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-top:10px;
-border:none;
-border-radius:8px;
-background:#222;
-color:white;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-background:#d4af37;
-color:black;
-font-weight:bold;
-cursor:pointer;
 }
 
 .progress-bar{
 height:8px;
 background:#222;
 border-radius:10px;
-margin-top:10px;
+margin-top:5px;
 overflow:hidden;
 }
 
@@ -112,99 +77,173 @@ overflow:hidden;
 height:100%;
 width:0%;
 background:#d4af37;
-transition:width 0.4s ease;
+transition:0.3s;
+}
+
+.food-btn{
+background:#222;
+border:1px solid #333;
+padding:8px;
+border-radius:8px;
+margin:5px 3px;
+font-size:12px;
+color:white;
+cursor:pointer;
+}
+
+.food-btn:hover{
+border-color:#d4af37;
+}
+
+.food-list{
+margin-top:10px;
+font-size:12px;
+color:#ccc;
 }
 
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
 <div class="header">
 <h1>ELITE FITNESS</h1>
+<select id="modeSelect" onchange="changeMode()">
+<option value="bulk">Volumen</option>
+<option value="cut">Definición</option>
+</select>
 </div>
 
 <div class="card">
-<div class="title">Peso actual</div>
-<div class="big" id="weightDisplay">-- kg</div>
-<input type="number" id="weightInput" placeholder="Ingresar peso">
-<button onclick="saveWeight()">Guardar peso</button>
+<div class="title">Calorías</div>
+<div class="big" id="caloriesDisplay">0 / 3400</div>
+<div class="progress-bar"><div class="progress" id="caloriesBar"></div></div>
 </div>
 
 <div class="card">
-<div class="title">Proteína de hoy</div>
+<div class="title">Proteínas</div>
 <div class="big" id="proteinDisplay">0 g</div>
-
-<div class="progress-bar">
-<div class="progress" id="proteinProgress"></div>
+<div class="progress-bar"><div class="progress" id="proteinBar"></div></div>
 </div>
 
-<input type="number" id="proteinInput" placeholder="Agregar proteína">
-<button onclick="addProtein()">Agregar proteína</button>
+<div class="card">
+<div class="title">Carbohidratos</div>
+<div class="big" id="carbDisplay">0 g</div>
+<div class="progress-bar"><div class="progress" id="carbBar"></div></div>
+</div>
+
+<div class="card">
+<div class="title">Grasas</div>
+<div class="big" id="fatDisplay">0 g</div>
+<div class="progress-bar"><div class="progress" id="fatBar"></div></div>
+</div>
+
+<div class="card">
+<div class="title">Agregar proteína</div>
+
+<button class="food-btn" onclick="addFood('huevo')">Huevo</button>
+<button class="food-btn" onclick="addFood('pollo')">Pollo 100g</button>
+<button class="food-btn" onclick="addFood('carne')">Carne 100g</button>
+<button class="food-btn" onclick="addFood('batido')">Batido</button>
+
+<div class="food-list" id="foodList"></div>
+
 </div>
 
 </div>
 
 <script>
 
-const PROTEIN_GOAL = 180;
 const today = new Date().toISOString().split("T")[0];
 
+const modes = {
+bulk: { calories:3400, protein:190, carbs:490, fat:75 },
+cut:  { calories:2600, protein:190, carbs:300, fat:70 }
+};
+
+const foods = {
+huevo:{p:6,c:0,f:5},
+pollo:{p:31,c:0,f:3},
+carne:{p:26,c:0,f:15},
+batido:{p:25,c:3,f:2}
+};
+
 function getData(){
-return JSON.parse(localStorage.getItem("eliteData") || "{}");
+return JSON.parse(localStorage.getItem("eliteProData") || "{}");
 }
 
 function saveData(data){
-localStorage.setItem("eliteData", JSON.stringify(data));
+localStorage.setItem("eliteProData",JSON.stringify(data));
+}
+
+function initDay(){
+let data=getData();
+if(!data[today]){
+data[today]={protein:0,carbs:0,fat:0,calories:0,foods:[]};
+saveData(data);
+}
+}
+
+function changeMode(){
+render();
+}
+
+function addFood(type){
+let data=getData();
+initDay();
+let current=data[today];
+
+let food=foods[type];
+
+current.protein+=food.p;
+current.carbs+=food.c;
+current.fat+=food.f;
+
+let kcal=(food.p*4)+(food.c*4)+(food.f*9);
+current.calories+=kcal;
+
+current.foods.push(type);
+
+saveData(data);
+render();
 }
 
 function render(){
-let data = getData();
+initDay();
+let data=getData();
+let current=data[today];
 
-if(!data[today]){
-data[today] = { weight: null, protein: 0 };
-saveData(data);
-}
+let mode=document.getElementById("modeSelect").value;
+let target=modes[mode];
 
-let current = data[today];
+document.getElementById("caloriesDisplay").innerText=
+current.calories+" / "+target.calories;
 
-document.getElementById("weightDisplay").innerText =
-current.weight ? current.weight + " kg" : "-- kg";
+document.getElementById("proteinDisplay").innerText=
+current.protein+" g";
 
-document.getElementById("proteinDisplay").innerText =
-current.protein + " g";
+document.getElementById("carbDisplay").innerText=
+current.carbs+" g";
 
-let percent = (current.protein / PROTEIN_GOAL) * 100;
-if(percent > 100) percent = 100;
+document.getElementById("fatDisplay").innerText=
+current.fat+" g";
 
-document.getElementById("proteinProgress").style.width =
-percent + "%";
-}
+document.getElementById("caloriesBar").style.width=
+(current.calories/target.calories*100)+"%";
 
-function saveWeight(){
-let data = getData();
-if(!data[today]) data[today] = { weight:null, protein:0 };
+document.getElementById("proteinBar").style.width=
+(current.protein/target.protein*100)+"%";
 
-let value = document.getElementById("weightInput").value;
-if(value === "") return;
+document.getElementById("carbBar").style.width=
+(current.carbs/target.carbs*100)+"%";
 
-data[today].weight = value;
-saveData(data);
-render();
-}
+document.getElementById("fatBar").style.width=
+(current.fat/target.fat*100)+"%";
 
-function addProtein(){
-let data = getData();
-if(!data[today]) data[today] = { weight:null, protein:0 };
-
-let value = parseInt(document.getElementById("proteinInput").value);
-if(isNaN(value)) return;
-
-data[today].protein += value;
-saveData(data);
-render();
+let list="";
+current.foods.forEach(f=>list+="• "+f+"<br>");
+document.getElementById("foodList").innerHTML=list;
 }
 
 render();
