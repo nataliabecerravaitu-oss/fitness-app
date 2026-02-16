@@ -155,19 +155,20 @@ async function actualizarClima() {
         climaBox.innerHTML = `🌡 ${temp}°C - ${clima.charAt(0).toUpperCase() + clima.slice(1)}`;
 
         // Cambiar fondo del body según clima
-        let fondo = "";
+        // Fondo fijo de Bitcoin / criptomonedas
+const fondosCrypto = [
+    "url('https://i.ibb.co/kB4hS5k/bitcoin1.jpg')",
+    "url('https://i.ibb.co/9YdXhH5/bitcoin2.jpg')",
+    "url('https://i.ibb.co/Z8Q8WZV/crypto3.jpg')"
+];
 
-        if(clima.includes("rain")) {
-            fondo = "url('https://i.ibb.co/9V0wJ8p/lluvia.jpg')";
-        } else if(clima.includes("cloud")) {
-            fondo = "url('https://i.ibb.co/7S6n2Vt/nublado.jpg')";
-        } else if(clima.includes("clear")) {
-            fondo = "url('https://i.ibb.co/0s2nVtV/sol.jpg')";
-        } else if(clima.includes("snow")) {
-            fondo = "url('https://i.ibb.co/xX9y1f7/nieve.jpg')";
-        } else {
-            fondo = "url('https://i.ibb.co/7S6n2Vt/nublado.jpg')";
-        }
+// Elegir un fondo aleatorio cada vez que carga la app
+const fondo = fondosCrypto[Math.floor(Math.random() * fondosCrypto.length)];
+
+document.body.style.backgroundImage = fondo;
+document.body.style.backgroundSize = "cover";
+document.body.style.backgroundPosition = "center";
+document.body.style.transition = "background 1s ease-in-out";
 
         document.body.style.backgroundImage = fondo;
         document.body.style.backgroundSize = "cover";
