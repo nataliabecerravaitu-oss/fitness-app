@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite Fitness</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+background:#000;
+color:white;
+min-height:100vh;
+overflow-x:hidden;
+}
+
+/* Fondo animado sutil dorado */
+body::before{
+content:"";
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:
+radial-gradient(circle at 30% 30%,rgba(212,175,55,0.08),transparent 40%),
+radial-gradient(circle at 70% 70%,rgba(212,175,55,0.05),transparent 40%);
+animation:moveBg 6s infinite alternate ease-in-out;
+z-index:-1;
+}
+
+@keyframes moveBg{
+0%{transform:translateY(0px);}
+100%{transform:translateY(-15px);}
+}
+
+.container{
+max-width:500px;
+margin:auto;
+padding:20px;
+}
+
+.header{
+text-align:center;
+margin-bottom:25px;
+}
+
+.header h1{
+color:#d4af37;
+letter-spacing:2px;
+font-size:22px;
+}
+
+.card{
+background:#111;
+border-radius:15px;
+padding:18px;
+margin-bottom:18px;
+border:1px solid rgba(212,175,55,0.3);
+}
+
+.title{
+font-size:14px;
+color:#aaa;
+margin-bottom:8px;
+}
+
+.big{
+font-size:26px;
+color:#d4af37;
+font-weight:bold;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:none;
+border-radius:8px;
+background:#222;
+color:white;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+background:#d4af37;
+color:black;
+font-weight:bold;
+cursor:pointer;
+}
+
+.progress-bar{
+height:8px;
+background:#222;
+border-radius:10px;
+margin-top:10px;
+overflow:hidden;
+}
+
+.progress{
+height:100%;
+width:0%;
+background:#d4af37;
+transition:width 0.4s ease;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<h1>ELITE FITNESS</h1>
+</div>
+
+<div class="card">
+<div class="title">Peso actual</div>
+<div class="big" id="weightDisplay">-- kg</div>
+<input type="number" id="weightInput" placeholder="Ingresar peso">
+<button onclick="saveWeight()">Guardar peso</button>
+</div>
+
+<div class="card">
+<div class="title">Proteína de hoy</div>
+<div class="big" id="proteinDisplay">0 g</div>
+
+<div class="progress-bar">
+<div class="progress" id="proteinProgress"></div>
+</div>
+
+<input type="number" id="proteinInput" placeholder="Agregar proteína">
+<button onclick="addProtein()">Agregar proteína</button>
+</div>
+
+</div>
+
+<script>
+
+const PROTEIN_GOAL = 180;
+const today = new Date().toISOString().split("T")[0];
+
+function getData(){
+return JSON.parse(localStorage.getItem("eliteData") || "{}");
+}
+
+function saveData(data){
+localStorage.setItem("eliteData", JSON.stringify(data));
+}
+
+function render(){
+let data = getData();
+
+if(!data[today]){
+data[today] = { weight: null, protein: 0 };
+saveData(data);
+}
+
+let current = data[today];
+
+document.getElementById("weightDisplay").innerText =
+current.weight ? current.weight + " kg" : "-- kg";
+
+document.getElementById("proteinDisplay").innerText =
+current.protein + " g";
+
+let percent = (current.protein / PROTEIN_GOAL) * 100;
+if(percent > 100) percent = 100;
+
+document.getElementById("proteinProgress").style.width =
+percent + "%";
+}
+
+function saveWeight(){
+let data = getData();
+if(!data[today]) data[today] = { weight:null, protein:0 };
+
+let value = document.getElementById("weightInput").value;
+if(value === "") return;
+
+data[today].weight = value;
+saveData(data);
+render();
+}
+
+function addProtein(){
+let data = getData();
+if(!data[today]) data[today] = { weight:null, protein:0 };
+
+let value = parseInt(document.getElementById("proteinInput").value);
+if(isNaN(value)) return;
+
+data[today].protein += value;
+saveData(data);
+render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>
