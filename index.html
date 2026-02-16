@@ -12,7 +12,17 @@ body{
     background:black;
     color:gold;
 }
-
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3); /* oscurece un poco el fondo */
+    z-index: -1;
+    pointer-events: none; /* para que no bloquee clicks */
+}
 header{
     text-align:center;
     padding:15px;
@@ -107,6 +117,7 @@ button{
 // CONFIGURACIÓN INICIAL
 // ===============================
 
+
 let metaCalorias = 3400;
 let metaProteina = 170;
 
@@ -117,6 +128,60 @@ let datosHoy = JSON.parse(localStorage.getItem("datosHoy")) || {
     grasas: 0
 };
 
+let historialAlimentos = JSON.parse(localStorage.getItem("historialAlimentos")) || [];
+// ===============================
+// CLIMA Y FONDO DINÁMICO
+// ===============================
+
+// Elemento donde se mostrará el clima (en pantalla Inicio)
+const climaBox = document.getElementById("climaBox");
+
+// Función para obtener el clima (puede usarse OpenWeatherMap)
+async function actualizarClima() {
+    try {
+        // 🔹 Coordenadas fijas (Uruguay, Montevideo), cambiá si querés dinámico
+        const lat = -34.9011;
+        const lon = -56.1645;
+        const apiKey = "ec3ea0af99e26dc4338f449647f4644a"; // pon tu API key de OpenWeatherMap
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const clima = data.weather[0].main.toLowerCase(); // "rain", "clouds", "clear", etc
+        const temp = Math.round(data.main.temp);
+
+        // Mostrar datos en la tarjeta
+        climaBox.innerHTML = `🌡 ${temp}°C - ${clima.charAt(0).toUpperCase() + clima.slice(1)}`;
+
+        // Cambiar fondo del body según clima
+        let fondo = "";
+
+        if(clima.includes("rain")) {
+            fondo = "url('https://i.ibb.co/9V0wJ8p/lluvia.jpg')";
+        } else if(clima.includes("cloud")) {
+            fondo = "url('https://i.ibb.co/7S6n2Vt/nublado.jpg')";
+        } else if(clima.includes("clear")) {
+            fondo = "url('https://i.ibb.co/0s2nVtV/sol.jpg')";
+        } else if(clima.includes("snow")) {
+            fondo = "url('https://i.ibb.co/xX9y1f7/nieve.jpg')";
+        } else {
+            fondo = "url('https://i.ibb.co/7S6n2Vt/nublado.jpg')";
+        }
+
+        document.body.style.backgroundImage = fondo;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.transition = "background 1s ease-in-out";
+
+    } catch(err) {
+        console.error("Error al obtener el clima:", err);
+        climaBox.innerHTML = "🌡 Clima no disponible";
+    }
+}
+
+// Llamar al cargar la app
+actualizarClima();
 // ===============================
 // BASE DE ALIMENTOS
 // ===============================
@@ -186,11 +251,16 @@ function showScreen(id){
     if(id === "motivacion"){
         cargarMotivacion();
     }
-}
+
+} 
+// ===============================
+// CARGAR NUTRICIÓN CON HISTORIAL Y ELIMINAR
+// ===============================
 function cargarNutricion(){
     const cont = document.getElementById("nutricionContenido");
 
-    cont.innerHTML = `
+    // Botones de categorías
+    let html = `
         <div class="card"><button onclick="mostrarCategoria('proteinas')">🥩 Proteínas</button></div>
         <div class="card"><button onclick="mostrarCategoria('carbohidratos')">🍚 Carbohidratos</button></div>
         <div class="card"><button onclick="mostrarCategoria('grasas')">🥑 Grasas</button></div>
@@ -199,50 +269,60 @@ function cargarNutricion(){
         <div class="card">
             <h3>Resumen Diario</h3>
             Calorías: ${datosHoy.calorias} / ${metaCalorias} <br>
-            Proteína: ${datosHoy.proteina}g / ${metaProteina}g
+            Proteína: ${datosHoy.proteina}g / ${metaProteina}g <br>
+            Carbs: ${datosHoy.carbs}g <br>
+            Grasas: ${datosHoy.grasas}g
         </div>
     `;
-}
 
-// ===============================
-// MOSTRAR ALIMENTOS
-// ===============================
+    // Historial de alimentos
+    if(historialAlimentos.length > 0){
+        html += `<h3>📝 Historial de Alimentos</h3>`;
+        let cantidades = {};
+        historialAlimentos.forEach(item => {
+            const key = item.tipo + "|" + item.nombre;
+            cantidades[key] = (cantidades[key] || 0) + 1;
+        });
 
-function mostrarCategoria(tipo){
-    const cont = document.getElementById("nutricionContenido");
-
-    let html = `<button onclick="cargarNutricion()">⬅ Volver</button>`;
-
-    alimentos[tipo].forEach(a=>{
-        html += `
-            <div class="card">
-                <b>${a.nombre}</b><br>
-                ${a.calorias} kcal | ${a.proteina}g proteína
-                <br>
-                <button onclick="agregarAlimento('${tipo}','${a.nombre}')">Agregar</button>
-            </div>
-        `;
-    });
+        for(let key in cantidades){
+            const [tipo, nombre] = key.split("|");
+            const cantidad = cantidades[key];
+            html += `
+                <div class="card">
+                    <b>${nombre}</b> x ${cantidad}
+                    <br>
+                    <button onclick="eliminarAlimento('${tipo}','${nombre}')">Eliminar 1</button>
+                </div>
+            `;
+        }
+    }
 
     cont.innerHTML = html;
 }
 
+
 // ===============================
-// AGREGAR ALIMENTO
+// ELIMINAR ALIMENTO
 // ===============================
 
-function agregarAlimento(tipo,nombre){
-    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
+function eliminarAlimento(tipo,nombre){
+    const index = historialAlimentos.findIndex(a => a.tipo === tipo && a.nombre === nombre);
+    if(index !== -1){
+        historialAlimentos.splice(index,1);
 
-    datosHoy.calorias += alimento.calorias;
-    datosHoy.proteina += alimento.proteina;
-    datosHoy.carbs += alimento.carbs;
-    datosHoy.grasas += alimento.grasas;
+        const alimento = alimentos[tipo].find(a => a.nombre === nombre);
+        datosHoy.calorias -= alimento.calorias;
+        datosHoy.proteina -= alimento.proteina;
+        datosHoy.carbs -= alimento.carbs;
+        datosHoy.grasas -= alimento.grasas;
 
-    localStorage.setItem("datosHoy", JSON.stringify(datosHoy));
+        localStorage.setItem("datosHoy", JSON.stringify(datosHoy));
+        localStorage.setItem("historialAlimentos", JSON.stringify(historialAlimentos));
 
-    cargarNutricion();
-actualizarResumenInicio();}
+        cargarNutricion();
+        actualizarResumenInicio();
+    }
+}
 
 // ===============================
 // INICIALIZAR
@@ -250,7 +330,178 @@ actualizarResumenInicio();}
 
 cargarNutricion();
 actualizarResumenInicio();;
+// ===============================
+// MOTIVACIÓN DIARIA
+// ===============================
+function cargarMotivacion(){
+    const frases = [
+        "💪 ¡Hoy vas a dar lo mejor de vos!",
+        "🔥 ¡Nada puede detenerte!",
+        "🏋️ ¡Cada esfuerzo suma!",
+        "🌟 ¡Sé la mejor versión de vos hoy!",
+        "⚡ ¡No hay excusas, solo resultados!",
+        "💥 ¡Rompé tus límites!",
+        "🌈 ¡Haz que hoy cuente!"
+    ];
 
+    // Obtener la fecha de hoy en formato YYYY-MM-DD
+    const hoy = new Date().toISOString().split('T')[0];
+
+    // Revisar si ya hay frase guardada para hoy
+    let fraseHoy = JSON.parse(localStorage.getItem("fraseMotivacionHoy")) || {};
+
+    if(fraseHoy.fecha !== hoy){
+        // Elegir frase aleatoria
+        const randomIndex = Math.floor(Math.random() * frases.length);
+        fraseHoy = {
+            fecha: hoy,
+            frase: frases[randomIndex]
+        };
+        localStorage.setItem("fraseMotivacionHoy", JSON.stringify(fraseHoy));
+    }
+
+    // Mostrar frase
+    document.getElementById("fraseMotivacion").innerHTML = fraseHoy.frase;
+}
+// ===============================
+// PLAN DE EJERCICIOS
+// ===============================
+
+// Configuración de días y músculos
+const diasEntreno = {
+    lunes:    {principal: "pecho", secundario: "triceps"},
+    martes:   {principal: "espalda", secundario: "biceps"},
+    jueves:   {principal: "piernas", secundario: "hombros"},
+    viernes:  {principal: "hombros", secundario: "abdominales"}
+};
+
+// Ejercicios por músculo (listas para rotar cada semana)
+const ejerciciosPorMusculo = {
+    pecho: ["Press con barra", "Press con mancuernas", "Aperturas con mancuernas", "Fondos en paralelas", "Press inclinado barra"],
+    triceps: ["Polea alta", "Extensiones con mancuerna", "Fondos en banco", "Press francés barra", "Extensión cuerda polea"],
+    espalda: ["Remo barra", "Remo mancuerna", "Jalón al pecho", "Peso muerto", "Pull-over mancuerna"],
+    biceps: ["Curl barra", "Curl mancuerna", "Curl martillo", "Curl predicador", "Curl concentrado"],
+    piernas: ["Sentadilla", "Prensa", "Zancadas", "Peso muerto piernas rígidas", "Extensión de pierna"],
+    hombros: ["Press militar barra", "Elevaciones laterales", "Elevaciones frontales", "Pájaros", "Arnold press"],
+    abdominales: ["Crunch", "Elevación de piernas", "Plancha", "Bicicleta", "Russian twist"],
+    cardio: ["Cinta", "Bicicleta", "Elíptica", "Saltos de cuerda"]
+};
+
+// Registro de entrenos en localStorage
+let registroEjercicios = JSON.parse(localStorage.getItem("registroEjercicios")) || {};
+
+// Función para obtener día de la semana en minúscula
+function obtenerDiaActual(){
+    const dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+    return dias[new Date().getDay()];
+}
+
+// Función para seleccionar ejercicios aleatorios (manteniendo mismo músculo)
+function seleccionarEjercicios(musculo){
+    const lista = ejerciciosPorMusculo[musculo];
+    let seleccion = [];
+    while(seleccion.length < 4){
+        const index = Math.floor(Math.random() * lista.length);
+        if(!seleccion.includes(lista[index])){
+            seleccion.push(lista[index]);
+        }
+    }
+    return seleccion;
+}
+
+// Función para cargar ejercicios del día
+function cargarEjercicios(){
+    const cont = document.getElementById("ejercicioContenido");
+    const dia = obtenerDiaActual();
+
+    if(!diasEntreno[dia]){
+        cont.innerHTML = "<h3>Descanso hoy 😌</h3>";
+        return;
+    }
+
+    const {principal, secundario} = diasEntreno[dia];
+
+    // Selección de ejercicios (rotando)
+    const ejerciciosPrincipal = seleccionarEjercicios(principal);
+    const ejerciciosSecundario = seleccionarEjercicios(secundario);
+
+    let html = `<h3>💪 ${dia.toUpperCase()}</h3>`;
+
+    function generarBloque(musculo, ejercicios){
+        let bloque = `<h4>${musculo.toUpperCase()}</h4>`;
+        ejercicios.forEach(ej => {
+            const key = `${dia}|${musculo}|${ej}`;
+            const registro = registroEjercicios[key] || {hecho:false, peso:"", reps:""};
+            bloque += `
+                <div class="card">
+                    <b>${ej}</b><br>
+                    Peso: <input type="number" id="peso-${key}" value="${registro.peso}" style="width:60px">
+                    Reps: <input type="number" id="reps-${key}" value="${registro.reps}" style="width:60px"><br>
+                    <button onclick="marcarEjercicio('${key}')">
+                        ${registro.hecho ? "✅ Hecho" : "Marcar hecho"}
+                    </button>
+                </div>
+            `;
+        });
+        return bloque;
+    }
+
+    html += generarBloque(principal, ejerciciosPrincipal);
+    html += generarBloque(secundario, ejerciciosSecundario);
+
+    cont.innerHTML = html;
+}
+
+// Función para marcar ejercicio hecho y guardar peso/reps
+function marcarEjercicio(key){
+    const peso = document.getElementById(`peso-${key}`).value;
+    const reps = document.getElementById(`reps-${key}`).value;
+
+    registroEjercicios[key] = {hecho:true, peso, reps};
+    localStorage.setItem("registroEjercicios", JSON.stringify(registroEjercicios));
+
+    cargarEjercicios();
+}
+
+// 🔹 ACTIVAR CARGA DE EJERCICIOS AL HACER CLICK EN LA NAVBAR
+document.querySelectorAll(".navbar div").forEach(el=>{
+    el.addEventListener("click", ()=>{
+        if(el.getAttribute("onclick").includes("ejercicio")){
+            cargarEjercicios();
+        }
+    });
+});
+// Mostrar los alimentos de una categoría y permitir agregarlos
+function mostrarCategoria(categoria){
+    const alimentosCat = alimentos[categoria];
+    let html = `<h3>${categoria.toUpperCase()}</h3>`;
+    alimentosCat.forEach(a => {
+        html += `
+            <div class="card">
+                ${a.nombre} - Cal: ${a.calorias}, Prot: ${a.proteina}g, Carbs: ${a.carbs}g, Grasas: ${a.grasas}g
+                <br>
+                <button onclick="agregarAlimento('${categoria}','${a.nombre}')">Agregar</button>
+            </div>
+        `;
+    });
+    document.getElementById("nutricionContenido").innerHTML = html;
+}
+
+// Agregar un alimento al historial y actualizar datos
+function agregarAlimento(tipo,nombre){
+    const alimento = alimentos[tipo].find(a => a.nombre === nombre);
+    historialAlimentos.push({tipo,nombre});
+    datosHoy.calorias += alimento.calorias;
+    datosHoy.proteina += alimento.proteina;
+    datosHoy.carbs += alimento.carbs;
+    datosHoy.grasas += alimento.grasas;
+
+    localStorage.setItem("datosHoy", JSON.stringify(datosHoy));
+    localStorage.setItem("historialAlimentos", JSON.stringify(historialAlimentos));
+    
+    cargarNutricion();
+    actualizarResumenInicio();
+}
 </script>
 
 </body>
