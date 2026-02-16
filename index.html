@@ -176,6 +176,16 @@ function showScreen(id){
     if(selected){
         selected.classList.add("active");
     }
+
+    // 🔥 NUEVO: actualizar contenido al entrar a Nutrición
+    if(id === "nutricion"){
+        cargarNutricion();
+    }
+
+    // 🔥 Opcional: actualizar motivación al entrar
+    if(id === "motivacion"){
+        cargarMotivacion();
+    }
 }
 function cargarNutricion(){
     const cont = document.getElementById("nutricionContenido");
