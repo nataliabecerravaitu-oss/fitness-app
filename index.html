@@ -102,10 +102,119 @@ button{
 </div>
 
 <script>
-function showScreen(id){
-    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
+
+// ===============================
+// CONFIGURACIÓN INICIAL
+// ===============================
+
+let metaCalorias = 3400;
+let metaProteina = 170;
+
+let datosHoy = JSON.parse(localStorage.getItem("datosHoy")) || {
+    calorias: 0,
+    proteina: 0,
+    carbs: 0,
+    grasas: 0
+};
+
+// ===============================
+// BASE DE ALIMENTOS
+// ===============================
+
+const alimentos = {
+    proteinas: [
+        {nombre:"Huevo", calorias:70, proteina:6, carbs:0, grasas:5},
+        {nombre:"Pollo (100g)", calorias:165, proteina:31, carbs:0, grasas:3},
+        {nombre:"Carne (100g)", calorias:250, proteina:26, carbs:0, grasas:15},
+        {nombre:"Atún", calorias:120, proteina:26, carbs:0, grasas:1},
+        {nombre:"Batido proteína", calorias:120, proteina:25, carbs:3, grasas:1}
+    ],
+    carbohidratos: [
+        {nombre:"Arroz (100g)", calorias:130, proteina:2, carbs:28, grasas:0},
+        {nombre:"Papa", calorias:110, proteina:3, carbs:26, grasas:0},
+        {nombre:"Avena", calorias:150, proteina:5, carbs:27, grasas:3}
+    ],
+    grasas: [
+        {nombre:"Palta", calorias:160, proteina:2, carbs:8, grasas:15},
+        {nombre:"Aceite oliva", calorias:120, proteina:0, carbs:0, grasas:14}
+    ],
+    frutas: [
+        {nombre:"Banana", calorias:100, proteina:1, carbs:27, grasas:0},
+        {nombre:"Manzana", calorias:80, proteina:0, carbs:21, grasas:0}
+    ],
+    verduras: [
+        {nombre:"Brócoli", calorias:55, proteina:4, carbs:11, grasas:0},
+        {nombre:"Espinaca", calorias:20, proteina:2, carbs:3, grasas:0}
+    ]
+};
+
+// ===============================
+// MOSTRAR CATEGORÍAS
+// ===============================
+
+function cargarNutricion(){
+    const cont = document.getElementById("nutricionContenido");
+
+    cont.innerHTML = `
+        <div class="card"><button onclick="mostrarCategoria('proteinas')">🥩 Proteínas</button></div>
+        <div class="card"><button onclick="mostrarCategoria('carbohidratos')">🍚 Carbohidratos</button></div>
+        <div class="card"><button onclick="mostrarCategoria('grasas')">🥑 Grasas</button></div>
+        <div class="card"><button onclick="mostrarCategoria('frutas')">🍎 Frutas</button></div>
+        <div class="card"><button onclick="mostrarCategoria('verduras')">🥦 Verduras</button></div>
+        <div class="card">
+            <h3>Resumen Diario</h3>
+            Calorías: ${datosHoy.calorias} / ${metaCalorias} <br>
+            Proteína: ${datosHoy.proteina}g / ${metaProteina}g
+        </div>
+    `;
 }
+
+// ===============================
+// MOSTRAR ALIMENTOS
+// ===============================
+
+function mostrarCategoria(tipo){
+    const cont = document.getElementById("nutricionContenido");
+
+    let html = `<button onclick="cargarNutricion()">⬅ Volver</button>`;
+
+    alimentos[tipo].forEach(a=>{
+        html += `
+            <div class="card">
+                <b>${a.nombre}</b><br>
+                ${a.calorias} kcal | ${a.proteina}g proteína
+                <br>
+                <button onclick="agregarAlimento('${tipo}','${a.nombre}')">Agregar</button>
+            </div>
+        `;
+    });
+
+    cont.innerHTML = html;
+}
+
+// ===============================
+// AGREGAR ALIMENTO
+// ===============================
+
+function agregarAlimento(tipo,nombre){
+    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
+
+    datosHoy.calorias += alimento.calorias;
+    datosHoy.proteina += alimento.proteina;
+    datosHoy.carbs += alimento.carbs;
+    datosHoy.grasas += alimento.grasas;
+
+    localStorage.setItem("datosHoy", JSON.stringify(datosHoy));
+
+    cargarNutricion();
+}
+
+// ===============================
+// INICIALIZAR
+// ===============================
+
+cargarNutricion();
+
 </script>
 
 </body>
