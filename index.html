@@ -3,251 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Fitness Pro</title>
+<title>Elite Cisne</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial, Helvetica, sans-serif;
-}
-
 body{
-background:#000;
-color:white;
-min-height:100vh;
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:black;
+    color:gold;
 }
 
-.container{
-max-width:500px;
-margin:auto;
-padding:20px;
+header{
+    text-align:center;
+    padding:15px;
+    font-size:22px;
+    font-weight:bold;
 }
 
-.header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
+.screen{
+    display:none;
+    padding:20px;
+    padding-bottom:80px;
 }
 
-.header h1{
-color:#d4af37;
-font-size:18px;
+.active{
+    display:block;
 }
 
-select{
-background:#111;
-color:#d4af37;
-border:1px solid #d4af37;
-padding:5px;
-border-radius:8px;
+.navbar{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#111;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+    border-top:2px solid gold;
+}
+
+.navbar div{
+    cursor:pointer;
+}
+
+button{
+    background:gold;
+    color:black;
+    border:none;
+    padding:8px;
+    margin:5px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
 }
 
 .card{
-background:#111;
-border:1px solid rgba(212,175,55,0.3);
-border-radius:15px;
-padding:15px;
-margin-bottom:15px;
+    background:#111;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
 }
-
-.title{
-font-size:13px;
-color:#aaa;
-margin-bottom:5px;
-}
-
-.big{
-font-size:20px;
-color:#d4af37;
-font-weight:bold;
-}
-
-.progress-bar{
-height:8px;
-background:#222;
-border-radius:10px;
-margin-top:5px;
-overflow:hidden;
-}
-
-.progress{
-height:100%;
-width:0%;
-background:#d4af37;
-transition:0.3s;
-}
-
-.food-btn{
-background:#222;
-border:1px solid #333;
-padding:8px;
-border-radius:8px;
-margin:5px 3px;
-font-size:12px;
-color:white;
-cursor:pointer;
-}
-
-.food-btn:hover{
-border-color:#d4af37;
-}
-
-.food-list{
-margin-top:10px;
-font-size:12px;
-color:#ccc;
-}
-
 </style>
 </head>
+
 <body>
 
-<div class="container">
+<header>🔥 Elite Cisne</header>
 
-<div class="header">
-<h1>ELITE FITNESS</h1>
-<select id="modeSelect" onchange="changeMode()">
-<option value="bulk">Volumen</option>
-<option value="cut">Definición</option>
-</select>
+<!-- INICIO -->
+<div id="inicio" class="screen active">
+    <h2>🏠 Inicio</h2>
+    <div id="climaBox" class="card"></div>
+    <div id="resumenDiario" class="card"></div>
 </div>
 
-<div class="card">
-<div class="title">Calorías</div>
-<div class="big" id="caloriesDisplay">0 / 3400</div>
-<div class="progress-bar"><div class="progress" id="caloriesBar"></div></div>
+<!-- NUTRICION -->
+<div id="nutricion" class="screen">
+    <h2>🍽 Nutrición</h2>
+    <div id="nutricionContenido"></div>
 </div>
 
-<div class="card">
-<div class="title">Proteínas</div>
-<div class="big" id="proteinDisplay">0 g</div>
-<div class="progress-bar"><div class="progress" id="proteinBar"></div></div>
+<!-- EJERCICIO -->
+<div id="ejercicio" class="screen">
+    <h2>🏋️ Ejercicio</h2>
+    <div id="ejercicioContenido"></div>
 </div>
 
-<div class="card">
-<div class="title">Carbohidratos</div>
-<div class="big" id="carbDisplay">0 g</div>
-<div class="progress-bar"><div class="progress" id="carbBar"></div></div>
+<!-- MOTIVACION -->
+<div id="motivacion" class="screen">
+    <h2>🧠 Motivación</h2>
+    <div id="fraseMotivacion" class="card"></div>
 </div>
 
-<div class="card">
-<div class="title">Grasas</div>
-<div class="big" id="fatDisplay">0 g</div>
-<div class="progress-bar"><div class="progress" id="fatBar"></div></div>
-</div>
-
-<div class="card">
-<div class="title">Agregar proteína</div>
-
-<button class="food-btn" onclick="addFood('huevo')">Huevo</button>
-<button class="food-btn" onclick="addFood('pollo')">Pollo 100g</button>
-<button class="food-btn" onclick="addFood('carne')">Carne 100g</button>
-<button class="food-btn" onclick="addFood('batido')">Batido</button>
-
-<div class="food-list" id="foodList"></div>
-
-</div>
-
+<div class="navbar">
+    <div onclick="showScreen('inicio')">🏠</div>
+    <div onclick="showScreen('nutricion')">🍽</div>
+    <div onclick="showScreen('ejercicio')">🏋️</div>
+    <div onclick="showScreen('motivacion')">🧠</div>
 </div>
 
 <script>
-
-const today = new Date().toISOString().split("T")[0];
-
-const modes = {
-bulk: { calories:3400, protein:190, carbs:490, fat:75 },
-cut:  { calories:2600, protein:190, carbs:300, fat:70 }
-};
-
-const foods = {
-huevo:{p:6,c:0,f:5},
-pollo:{p:31,c:0,f:3},
-carne:{p:26,c:0,f:15},
-batido:{p:25,c:3,f:2}
-};
-
-function getData(){
-return JSON.parse(localStorage.getItem("eliteProData") || "{}");
+function showScreen(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
-
-function saveData(data){
-localStorage.setItem("eliteProData",JSON.stringify(data));
-}
-
-function initDay(){
-let data=getData();
-if(!data[today]){
-data[today]={protein:0,carbs:0,fat:0,calories:0,foods:[]};
-saveData(data);
-}
-}
-
-function changeMode(){
-render();
-}
-
-function addFood(type){
-let data=getData();
-initDay();
-let current=data[today];
-
-let food=foods[type];
-
-current.protein+=food.p;
-current.carbs+=food.c;
-current.fat+=food.f;
-
-let kcal=(food.p*4)+(food.c*4)+(food.f*9);
-current.calories+=kcal;
-
-current.foods.push(type);
-
-saveData(data);
-render();
-}
-
-function render(){
-initDay();
-let data=getData();
-let current=data[today];
-
-let mode=document.getElementById("modeSelect").value;
-let target=modes[mode];
-
-document.getElementById("caloriesDisplay").innerText=
-current.calories+" / "+target.calories;
-
-document.getElementById("proteinDisplay").innerText=
-current.protein+" g";
-
-document.getElementById("carbDisplay").innerText=
-current.carbs+" g";
-
-document.getElementById("fatDisplay").innerText=
-current.fat+" g";
-
-document.getElementById("caloriesBar").style.width=
-(current.calories/target.calories*100)+"%";
-
-document.getElementById("proteinBar").style.width=
-(current.protein/target.protein*100)+"%";
-
-document.getElementById("carbBar").style.width=
-(current.carbs/target.carbs*100)+"%";
-
-document.getElementById("fatBar").style.width=
-(current.fat/target.fat*100)+"%";
-
-let list="";
-current.foods.forEach(f=>list+="• "+f+"<br>");
-document.getElementById("foodList").innerHTML=list;
-}
-
-render();
-
 </script>
 
 </body>
