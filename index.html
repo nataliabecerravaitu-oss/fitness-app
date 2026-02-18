@@ -7,271 +7,449 @@
 
 <style>
 body{
-margin:0;
-font-family:Arial;
-color:gold;
-background:black;
-transition: background 1s ease;
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:black;
+    color:gold;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    transition: background 1s ease-in-out;
 }
-
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    z-index: 0;
+    pointer-events: none;
+}
 header{
-text-align:center;
-padding:15px;
-font-size:22px;
-font-weight:bold;
-border-bottom:2px solid gold;
-background:rgba(0,0,0,0.7);
+    text-align:center;
+    padding:15px;
+    font-size:22px;
+    font-weight:bold;
 }
-
-.screen{display:none;padding:20px;padding-bottom:90px;}
-.active{display:block;}
-
+.screen{
+    display:none;
+    padding:20px;
+    padding-bottom:100px;
+}
+.active{
+    display:block;
+}
 .navbar{
-position:fixed;
-bottom:0;
-width:100%;
-background:#111;
-display:flex;
-justify-content:space-around;
-padding:10px 0;
-border-top:2px solid gold;
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#111;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+    border-top:2px solid gold;
 }
-
-.navbar div{cursor:pointer;font-size:18px;}
-
+.navbar div{
+    cursor:pointer;
+    font-size:20px;
+}
 button{
-background:gold;
-color:black;
-border:none;
-padding:6px 10px;
-margin:5px 0;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
+    background:gold;
+    color:black;
+    border:none;
+    padding:8px;
+    margin:5px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
 }
-
 .card{
-background:rgba(0,0,0,0.75);
-padding:15px;
-margin:10px 0;
-border-radius:10px;
+    background:#111;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+}
+input[type="number"]{
+    width:60px;
+}
+.progress{
+    height:20px;
+    background:#333;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:5px;
+}
+.progress-fill{
+    height:100%;
+    background:gold;
+    width:0%;
+    transition: width 0.3s;
 }
 </style>
 </head>
 
 <body>
-
 <header>🔥 Elite Cisne</header>
 
+<!-- INICIO -->
 <div id="inicio" class="screen active">
-<h2>🏠 Inicio</h2>
-<div id="resumenDiario" class="card"></div>
+    <h2>🏠 Inicio</h2>
+    <div id="climaBox" class="card"></div>
+    <div id="resumenDiario" class="card"></div>
+    <div class="card">
+        <h3>💧 Agua diaria</h3>
+        <div id="aguaBox" class="progress"><div id="aguaFill" class="progress-fill"></div></div>
+        <button onclick="tomarAgua()">Agregar vaso</button>
+    </div>
 </div>
 
+<!-- NUTRICION -->
 <div id="nutricion" class="screen">
-<h2>🍽 Nutrición</h2>
-<div id="nutricionContenido"></div>
+    <h2>🍽 Nutrición</h2>
+    <div id="nutricionContenido"></div>
 </div>
 
-<div id="deporte" class="screen">
-<h2>🏋️ Plan del Día</h2>
-<div id="planEntreno"></div>
+<!-- EJERCICIO -->
+<div id="ejercicio" class="screen">
+    <h2>🏋️ Ejercicio</h2>
+    <div id="ejercicioContenido"></div>
 </div>
 
+<!-- MOTIVACION -->
+<div id="motivacion" class="screen">
+    <h2>🧠 Motivación</h2>
+    <div id="fraseMotivacion" class="card"></div>
+</div>
+
+<!-- ESTADISTICAS -->
 <div id="estadisticas" class="screen">
-<h2>📊 Estadísticas</h2>
-<div id="estadisticasContenido"></div>
+    <h2>📊 Estadísticas Semanales</h2>
+    <div id="estadisticasContenido" class="card"></div>
 </div>
 
 <div class="navbar">
-<div onclick="showScreen('inicio')">🏠</div>
-<div onclick="showScreen('nutricion')">🍽</div>
-<div onclick="showScreen('deporte')">🏋️</div>
-<div onclick="showScreen('estadisticas')">📊</div>
+    <div onclick="showScreen('inicio')">🏠</div>
+    <div onclick="showScreen('nutricion')">🍽</div>
+    <div onclick="showScreen('ejercicio')">🏋️</div>
+    <div onclick="showScreen('motivacion')">🧠</div>
+    <div onclick="showScreen('estadisticas')">📊</div>
 </div>
 
 <script>
-
-// ===== CONFIG NUTRICION =====
+// ===============================
+// CONFIGURACION
+// ===============================
 let metaCalorias = 3400;
 let metaProteina = 170;
+let metaAgua = 3000; // ml
 
-let hoy = new Date();
-let fecha = hoy.toISOString().split("T")[0];
-let diaSemana = hoy.getDay(); // 0 domingo
+let hoy = new Date().toISOString().split("T")[0];
 
-let historial = JSON.parse(localStorage.getItem("eliteCisneFull")) || {};
-if(!historial[fecha]){
-historial[fecha]={calorias:0,proteina:0,entreno:false};
-}
-let datosHoy = historial[fecha];
+let historial = JSON.parse(localStorage.getItem("historialCompleto")) || {};
+let registroEjercicios = JSON.parse(localStorage.getItem("registroEjercicios")) || {};
 
-// ===== SEMANA PARA ROTACION =====
-function semanaDelAnio(d){
-let inicio=new Date(d.getFullYear(),0,1);
-let dias=Math.floor((d-inicio)/(24*60*60*1000));
-return Math.ceil((d.getDay()+1+dias)/7);
-}
-let rotacion = semanaDelAnio(hoy) % 2;
-
-// ===== RUTINA INTELIGENTE =====
-const rutina = {
-
-1:{ // Lunes
-nombre:"Pecho + Tríceps",
-A:["Press plano barra","Press declinado","Tríceps cuerda","Fondos"],
-B:["Press mancuernas","Cruce polea","Tríceps francés","Extensión unilateral"]
-},
-
-2:{ // Martes
-nombre:"Espalda + Bíceps",
-A:["Polea al pecho","Remo barra","Curl barra","Martillo"],
-B:["Jalón cerrado","Remo mancuerna","Curl Scott","Curl alternado"]
-},
-
-4:{ // Jueves
-nombre:"Piernas + Hombros",
-A:["Sentadilla","Cuádriceps máquina","Press militar","Elevaciones laterales"],
-B:["Prensa","Peso muerto rumano","Press militar mancuerna","Elevaciones frontales"]
-},
-
-5:{ // Viernes
-nombre:"Espalda ligera + Brazos",
-A:["Trapecio barra","Remo liviano","Bíceps concentrado","Tríceps polea"],
-B:["Jalón amplio","Remo máquina","Curl inclinado","Patada tríceps"]
+if(!historial[hoy]){
+    historial[hoy] = {calorias:0,proteina:0,carbs:0,grasas:0,agua:0,alimentos:[]};
 }
 
+let datosHoy = historial[hoy];
+let historialAlimentos = datosHoy.alimentos;
+
+// ===============================
+// FONDO Y CLIMA
+// ===============================
+const climaBox = document.getElementById("climaBox");
+async function actualizarClima(){
+    try{
+        const lat = -34.9011, lon = -56.1645;
+        const apiKey = "ec3ea0af99e26dc4338f449647f4644a";
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`);
+        const data = await res.json();
+        const clima = data.weather[0].main;
+        const temp = Math.round(data.main.temp);
+        climaBox.innerHTML = `🌡 ${temp}°C - ${clima}`;
+        const fondos = [
+            "url('https://i.ibb.co/kB4hS5k/bitcoin1.jpg')",
+            "url('https://i.ibb.co/9YdXhH5/bitcoin2.jpg')",
+            "url('https://i.ibb.co/Z8Q8WZV/crypto3.jpg')"
+        ];
+        document.body.style.backgroundImage = fondos[Math.floor(Math.random()*fondos.length)];
+    }catch(e){
+        climaBox.innerHTML = "🌡 Clima no disponible";
+    }
+}
+actualizarClima();
+
+// ===============================
+// BASE DE ALIMENTOS
+// ===============================
+const alimentos = {
+    proteinas:[
+        {nombre:"Huevo",calorias:70,proteina:6,carbs:0,grasas:5},
+        {nombre:"Pollo (100g)",calorias:165,proteina:31,carbs:0,grasas:3},
+        {nombre:"Carne (100g)",calorias:250,proteina:26,carbs:0,grasas:15},
+        {nombre:"Atún",calorias:120,proteina:26,carbs:0,grasas:1},
+        {nombre:"Batido proteína",calorias:120,proteina:25,carbs:3,grasas:1}
+    ],
+    carbohidratos:[
+        {nombre:"Arroz (100g)",calorias:130,proteina:2,carbs:28,grasas:0},
+        {nombre:"Papa",calorias:110,proteina:3,carbs:26,grasas:0},
+        {nombre:"Fideos (100g)",calorias:140,proteina:5,carbs:27,grasas:1},
+        {nombre:"Avena",calorias:150,proteina:5,carbs:27,grasas:3}
+    ],
+    grasas:[
+        {nombre:"Palta",calorias:160,proteina:2,carbs:8,grasas:15},
+        {nombre:"Aceite oliva",calorias:120,proteina:0,carbs:0,grasas:14}
+    ],
+    frutas:[
+        {nombre:"Banana",calorias:100,proteina:1,carbs:27,grasas:0},
+        {nombre:"Manzana",calorias:80,proteina:0,carbs:21,grasas:0},
+        {nombre:"Naranja",calorias:60,proteina:1,carbs:15,grasas:0},
+        {nombre:"Frutilla (100g)",calorias:32,proteina:1,carbs:8,grasas:0},
+        {nombre:"Mango",calorias:99,proteina:1,carbs:25,grasas:0}
+    ],
+    verduras:[
+        {nombre:"Brócoli",calorias:55,proteina:4,carbs:11,grasas:0},
+        {nombre:"Espinaca",calorias:20,proteina:2,carbs:3,grasas:0},
+        {nombre:"Zanahoria",calorias:41,proteina:1,carbs:10,grasas:0},
+        {nombre:"Tomate",calorias:22,proteina:1,carbs:5,grasas:0},
+        {nombre:"Lechuga",calorias:15,proteina:1,carbs:3,grasas:0}
+    ]
 };
 
-// ===== NAVEGACION =====
+// ===============================
+// FUNCIONES GENERALES
+// ===============================
 function showScreen(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-if(id==="nutricion") cargarNutricion();
-if(id==="deporte") cargarPlan();
-if(id==="estadisticas") cargarEstadisticas();
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+
+    if(id==="nutricion") cargarNutricion();
+    if(id==="ejercicio") cargarEjercicios();
+    if(id==="motivacion") cargarMotivacion();
+    if(id==="estadisticas") cargarEstadisticas();
 }
 
-// ===== RESUMEN =====
-function actualizarResumen(){
-document.getElementById("resumenDiario").innerHTML=`
-Fecha: ${fecha}<br>
-Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
-Proteína: ${datosHoy.proteina}g/${metaProteina}g
-`;
+function actualizarResumenInicio(){
+    const box = document.getElementById("resumenDiario");
+    box.innerHTML = `
+        <h3>📊 Resumen Diario</h3>
+        Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
+        Proteína: ${datosHoy.proteina}g/${metaProteina}g<br>
+        Carbs: ${datosHoy.carbs}g<br>
+        Grasas: ${datosHoy.grasas}g<br>
+        Agua: ${datosHoy.agua}ml/${metaAgua}ml
+    `;
+    document.getElementById("aguaFill").style.width = Math.min(100,(datosHoy.agua/metaAgua*100))+"%";
 }
 
-// ===== NUTRICION =====
+// ===============================
+// AGUA
+// ===============================
+function tomarAgua(){
+    datosHoy.agua += 250; // ml por vaso
+    historial[hoy]=datosHoy;
+    localStorage.setItem("historialCompleto",JSON.stringify(historial));
+    actualizarResumenInicio();
+}
+
+// ===============================
+// NUTRICION
+// ===============================
 function cargarNutricion(){
-document.getElementById("nutricionContenido").innerHTML=`
-<div class="card">
-<button onclick="sumar(200,30)">+ Pollo 200g</button>
-<button onclick="sumar(70,6)">+ Huevo</button>
-<button onclick="sumar(300,10)">+ Fideos</button>
-</div>`;
+    const cont = document.getElementById("nutricionContenido");
+    let html="";
+    for(let cat in alimentos){
+        html += `<div class="card"><button onclick="mostrarCategoria('${cat}')">📌 ${cat.toUpperCase()}</button></div>`;
+    }
+    html += `<div class="card">
+        <h3>Resumen Diario</h3>
+        Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
+        Proteína: ${datosHoy.proteina}g/${metaProteina}g<br>
+        Carbs: ${datosHoy.carbs}g<br>
+        Grasas: ${datosHoy.grasas}g
+    </div>`;
+
+    // Historial
+    if(historialAlimentos.length>0){
+        html += `<h3>📝 Historial de alimentos</h3>`;
+        let cantidades={};
+        historialAlimentos.forEach(a=>{
+            const key=a.tipo+"|"+a.nombre;
+            cantidades[key]=(cantidades[key]||0)+1;
+        });
+        for(let key in cantidades){
+            const [tipo,nombre]=key.split("|");
+            html += `<div class="card"><b>${nombre}</b> x ${cantidades[key]}
+                     <br><button onclick="eliminarAlimento('${tipo}','${nombre}')">Eliminar 1</button></div>`;
+        }
+    }
+
+    cont.innerHTML=html;
 }
 
-function sumar(cal,prot){
-datosHoy.calorias+=cal;
-datosHoy.proteina+=prot;
-guardar();
-actualizarResumen();
+function mostrarCategoria(cat){
+    let html=`<h3>${cat.toUpperCase()}</h3>`;
+    alimentos[cat].forEach(a=>{
+        html += `<div class="card">
+            ${a.nombre} - Cal:${a.calorias}, Prot:${a.proteina}g, Carbs:${a.carbs}g, Grasas:${a.grasas}g
+            <br><button onclick="agregarAlimento('${cat}','${a.nombre}')">Agregar</button>
+        </div>`;
+    });
+    document.getElementById("nutricionContenido").innerHTML=html;
 }
 
-// ===== PLAN ENTRENAMIENTO =====
-function cargarPlan(){
-
-// Domingo
-if(diaSemana===0){
-document.getElementById("planEntreno").innerHTML=
-`<div class="card">📊 Hoy es día de Estadística</div>`;
-return;
+function agregarAlimento(tipo,nombre){
+    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
+    historialAlimentos.push({tipo,nombre});
+    datosHoy.calorias += alimento.calorias;
+    datosHoy.proteina += alimento.proteina;
+    datosHoy.carbs += alimento.carbs;
+    datosHoy.grasas += alimento.grasas;
+    historial[hoy]=datosHoy;
+    localStorage.setItem("historialCompleto",JSON.stringify(historial));
+    cargarNutricion();
+    actualizarResumenInicio();
 }
 
-// Miércoles
-if(diaSemana===3){
-document.getElementById("planEntreno").innerHTML=
-`<div class="card">🛌 Hoy toca DESCANSO</div>`;
-return;
+function eliminarAlimento(tipo,nombre){
+    const index = historialAlimentos.findIndex(a=>a.tipo===tipo && a.nombre===nombre);
+    if(index===-1) return;
+    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
+    datosHoy.calorias -= alimento.calorias;
+    datosHoy.proteina -= alimento.proteina;
+    datosHoy.carbs -= alimento.carbs;
+    datosHoy.grasas -= alimento.grasas;
+    historialAlimentos.splice(index,1);
+    historial[hoy]=datosHoy;
+    localStorage.setItem("historialCompleto",JSON.stringify(historial));
+    cargarNutricion();
+    actualizarResumenInicio();
 }
 
-// Sábado
-if(diaSemana===6){
-document.getElementById("planEntreno").innerHTML=
-`<div class="card">🫀 Cardio 20-30 minutos</div>`;
-return;
+// ===============================
+// MOTIVACION
+// ===============================
+function cargarMotivacion(){
+    const frases=[
+        "💪 ¡Hoy vas a dar lo mejor de vos!",
+        "🔥 ¡Nada puede detenerte!",
+        "🏋️ ¡Cada esfuerzo suma!",
+        "🌟 ¡Sé la mejor versión de vos hoy!",
+        "⚡ ¡No hay excusas, solo resultados!",
+        "💥 ¡Rompé tus límites!",
+        "🌈 ¡Haz que hoy cuente!"
+    ];
+    const hoyStr = new Date().toISOString().split("T")[0];
+    let fraseHoy=JSON.parse(localStorage.getItem("fraseMotivacionHoy"))||{};
+    if(fraseHoy.fecha!==hoyStr){
+        fraseHoy={fecha:hoyStr,frase:frases[Math.floor(Math.random()*frases.length)]};
+        localStorage.setItem("fraseMotivacionHoy",JSON.stringify(fraseHoy));
+    }
+    document.getElementById("fraseMotivacion").innerHTML=fraseHoy.frase;
 }
 
-// Días entrenamiento
-let dia = rutina[diaSemana];
-let lista = rotacion===0 ? dia.A : dia.B;
+// ===============================
+// EJERCICIOS
+// ===============================
+const diasEntreno={
+    lunes:{principal:"pecho",secundario:"triceps"},
+    martes:{principal:"espalda",secundario:"biceps"},
+    jueves:{principal:"piernas",secundario:"hombros"},
+    viernes:{principal:"core",secundario:"abdominales"},
+    sabado:{principal:"cardio",secundario:""}
+};
 
-let html=`<div class="card"><b>${dia.nombre}</b><br><br>`;
-lista.forEach(e=>{ html+=`• ${e}<br>`; });
-html+=`<br><button onclick="marcarEntreno()">Marcar como completado</button></div>`;
+const ejerciciosPorMusculo={
+    pecho:["Press barra","Press mancuernas","Aperturas mancuernas","Fondos paralelas","Press inclinado"],
+    triceps:["Polea alta","Extensiones manc","Fondos banco","Press francés barra","Cuerda polea"],
+    espalda:["Remo barra","Remo manc","Jalón al pecho","Peso muerto","Pull-over manc"],
+    biceps:["Curl barra","Curl manc","Curl martillo","Curl predicador","Curl concentrado"],
+    piernas:["Sentadilla","Prensa","Zancadas","Peso muerto piernas rígidas","Extensión pierna"],
+    hombros:["Press militar barra","Elevaciones laterales","Elevaciones frontales","Pájaros","Arnold press"],
+    abdominales:["Crunch","Elevación piernas","Plancha","Bicicleta","Russian twist"],
+    core:["Plancha","Crunch","Bicicleta","Elevación piernas","Russian twist"],
+    cardio:["Cinta","Bicicleta","Elíptica","Saltos cuerda"]
+};
 
-document.getElementById("planEntreno").innerHTML=html;
+function obtenerDiaActual(){
+    const dias=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+    return dias[new Date().getDay()];
 }
 
-function marcarEntreno(){
-datosHoy.entreno=true;
-guardar();
-alert("Entrenamiento guardado 💪");
+function seleccionarEjercicios(musculo){
+    if(!ejerciciosPorMusculo[musculo]) return [];
+    const lista=ejerciciosPorMusculo[musculo];
+    let seleccion=[];
+    while(seleccion.length<Math.min(4,lista.length)){
+        const index=Math.floor(Math.random()*lista.length);
+        if(!seleccion.includes(lista[index])) seleccion.push(lista[index]);
+    }
+    return seleccion;
 }
 
-// ===== ESTADISTICAS =====
+function cargarEjercicios(){
+    const cont=document.getElementById("ejercicioContenido");
+    const dia=obtenerDiaActual();
+    if(!diasEntreno[dia]){
+        cont.innerHTML="<h3>Descanso hoy 😌</h3>";
+        return;
+    }
+    const {principal,secundario}=diasEntreno[dia];
+    const ejPrincipal=seleccionarEjercicios(principal);
+    const ejSecundario=seleccionarEjercicios(secundario);
+    let html=`<h3>💪 ${dia.toUpperCase()}</h3>`;
+    function bloque(musculo,ejercicios){
+        let b=`<h4>${musculo.toUpperCase()}</h4>`;
+        ejercicios.forEach(ej=>{
+            const key=`${dia}|${musculo}|${ej}`;
+            const reg=registroEjercicios[key]||{hecho:false,peso:"",reps:""};
+            b+=`<div class="card"><b>${ej}</b><br>Peso:<input type="number" id="peso_${key}" value="${reg.peso}" placeholder="kg">
+            Reps:<input type="number" id="reps_${key}" value="${reg.reps}" placeholder="rep">
+            <button onclick="guardarEjercicio('${key}')">Guardar</button>
+            </div>`;
+        });
+        return b;
+    }
+    html += bloque(principal,ejPrincipal);
+    if(secundario) html += bloque(secundario,ejSecundario);
+    cont.innerHTML = html;
+}
+
+function guardarEjercicio(key){
+    const peso = document.getElementById("peso_"+key).value;
+    const reps = document.getElementById("reps_"+key).value;
+    registroEjercicios[key] = {hecho:true,peso,peso: peso || "", reps: reps || ""};
+    localStorage.setItem("registroEjercicios",JSON.stringify(registroEjercicios));
+    alert("✅ Ejercicio guardado");
+}
+
+// ===============================
+// ESTADISTICAS SEMANA
+// ===============================
 function cargarEstadisticas(){
-let fechas=Object.keys(historial).sort().reverse().slice(0,7);
-
-let totalCal=0,totalProt=0,entrenos=0;
-
-fechas.forEach(f=>{
-totalCal+=historial[f].calorias||0;
-totalProt+=historial[f].proteina||0;
-if(historial[f].entreno) entrenos++;
-});
-
-document.getElementById("estadisticasContenido").innerHTML=`
-<div class="card">
-Promedio Calorías: ${Math.round(totalCal/(fechas.length||1))}<br>
-Promedio Proteína: ${Math.round(totalProt/(fechas.length||1))}g<br>
-Entrenamientos realizados: ${entrenos}/4
-</div>`;
+    const cont=document.getElementById("estadisticasContenido");
+    let html="<h3>📅 Últimos 7 días</h3>";
+    const dias = Object.keys(historial).slice(-7);
+    dias.forEach(d=>{
+        const data = historial[d];
+        html+=`<div class="card"><b>${d}</b><br>
+            Calorías: ${data.calorias}/${metaCalorias}<br>
+            Proteína: ${data.proteina}g/${metaProteina}g<br>
+            Carbs: ${data.carbs}g<br>
+            Grasas: ${data.grasas}g<br>
+            Agua: ${data.agua}ml/${metaAgua}ml
+        </div>`;
+    });
+    cont.innerHTML=html;
 }
 
-// ===== GUARDAR =====
-function guardar(){
-historial[fecha]=datosHoy;
-localStorage.setItem("eliteCisneFull",JSON.stringify(historial));
-}
-
-// ===== FONDO SEGUN CLIMA =====
-function cargarClima(){
-if(!navigator.geolocation) return;
-
-navigator.geolocation.getCurrentPosition(pos=>{
-let lat=pos.coords.latitude;
-let lon=pos.coords.longitude;
-
-fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
-.then(res=>res.json())
-.then(data=>{
-let temp=data.current_weather.temperature;
-
-if(temp<10){
-document.body.style.background="linear-gradient(#001f3f, black)";
-}else if(temp<25){
-document.body.style.background="linear-gradient(#003300, black)";
-}else{
-document.body.style.background="linear-gradient(#660000, black)";
-}
-});
-});
-}
-
-actualizarResumen();
-cargarClima();
-
+// ===============================
+// INICIALIZAR
+// ===============================
+actualizarResumenInicio();
 </script>
 </body>
 </html>
