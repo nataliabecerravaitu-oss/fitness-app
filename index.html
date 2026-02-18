@@ -1,251 +1,277 @@
-<!DOCTYPE html>  <html lang="es">    <head>    
-<meta charset="UTF-8">    
-<meta name="viewport" content="width=device-width, initial-scale=1.0">    
-<title>Elite Cisne</title>  <style>    
-body{    
-    margin:0;    
-    font-family:Arial, sans-serif;    
-    background:black;    
-    color:gold;    
-}    
-header{    
-    text-align:center;    
-    padding:15px;    
-    font-size:22px;    
-    font-weight:bold;    
-    border-bottom:2px solid gold;    
-}    
-.screen{    
-    display:none;    
-    padding:20px;    
-    padding-bottom:90px;    
-}    
-.active{    
-    display:block;    
-}    
-.navbar{    
-    position:fixed;    
-    bottom:0;    
-    width:100%;    
-    background:#111;    
-    display:flex;    
-    justify-content:space-around;    
-    padding:10px 0;    
-    border-top:2px solid gold;    
-}    
-.navbar div{    
-    cursor:pointer;    
-    font-size:20px;    
-}    
-button{    
-    background:gold;    
-    color:black;    
-    border:none;    
-    padding:8px 12px;    
-    margin:5px 0;    
-    border-radius:8px;    
-    font-weight:bold;    
-    cursor:pointer;    
-}    
-.card{    
-    background:#111;    
-    padding:15px;    
-    margin:10px 0;    
-    border-radius:10px;    
-}    
-select{    
-    padding:6px;    
-    border-radius:6px;    
-}    
-</style>  </head>  <body>  <header>🔥 Elite Cisne</header>  <div id="inicio" class="screen active">    
-    <h2>🏠 Inicio</h2>    
-    <div id="resumenDiario" class="card"></div>    
-</div>  <div id="nutricion" class="screen">    
-    <h2>🍽 Nutrición</h2>    
-    <div id="nutricionContenido"></div>    
-</div>  <div id="historial" class="screen">    
-    <h2>📅 Historial Semanal</h2>    
-    <div id="historialContenido"></div>    
-</div>  <div class="navbar">    
-    <div onclick="showScreen('inicio')">🏠</div>    
-    <div onclick="showScreen('nutricion')">🍽</div>    
-    <div onclick="showScreen('historial')">📅</div>    
-</div>  <script>// =======================    
-// CONFIG    
-// =======================    let metaCalorias = 3400;
-let metaProteina = 170;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite Cisne</title>
 
-let hoy = new Date().toISOString().split("T")[0];
-let historial = JSON.parse(localStorage.getItem("historialCompleto")) || {};
-
-if(!historial[hoy]){
-historial[hoy] = {
-calorias:0,
-proteina:0,
-carbs:0,
-grasas:0,
-alimentos:[]
-};
+<style>
+body{
+margin:0;
+font-family:Arial;
+color:gold;
+background:black;
+transition: background 1s ease;
 }
 
-let datosHoy = historial[hoy];
-let historialAlimentos = datosHoy.alimentos;
+header{
+text-align:center;
+padding:15px;
+font-size:22px;
+font-weight:bold;
+border-bottom:2px solid gold;
+background:rgba(0,0,0,0.7);
+}
 
-// =======================
-// BASE DE ALIMENTOS
-// =======================
+.screen{display:none;padding:20px;padding-bottom:90px;}
+.active{display:block;}
 
-const alimentos = {
-proteinas:[
-{nombre:"Huevo", calorias:70, proteina:6, carbs:0, grasas:5},
-{nombre:"Pollo (100g)", calorias:165, proteina:31, carbs:0, grasas:3}
-],
-carbohidratos:[
-{nombre:"Arroz (100g)", calorias:130, proteina:2, carbs:28, grasas:0},
-{nombre:"Papa (100g)", calorias:77, proteina:2, carbs:17, grasas:0}
-],
-grasas:[
-{nombre:"Aceite (10g)", calorias:90, proteina:0, carbs:0, grasas:10}
-]
+.navbar{
+position:fixed;
+bottom:0;
+width:100%;
+background:#111;
+display:flex;
+justify-content:space-around;
+padding:10px 0;
+border-top:2px solid gold;
+}
+
+.navbar div{cursor:pointer;font-size:18px;}
+
+button{
+background:gold;
+color:black;
+border:none;
+padding:6px 10px;
+margin:5px 0;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.card{
+background:rgba(0,0,0,0.75);
+padding:15px;
+margin:10px 0;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>🔥 Elite Cisne</header>
+
+<div id="inicio" class="screen active">
+<h2>🏠 Inicio</h2>
+<div id="resumenDiario" class="card"></div>
+</div>
+
+<div id="nutricion" class="screen">
+<h2>🍽 Nutrición</h2>
+<div id="nutricionContenido"></div>
+</div>
+
+<div id="deporte" class="screen">
+<h2>🏋️ Plan del Día</h2>
+<div id="planEntreno"></div>
+</div>
+
+<div id="estadisticas" class="screen">
+<h2>📊 Estadísticas</h2>
+<div id="estadisticasContenido"></div>
+</div>
+
+<div class="navbar">
+<div onclick="showScreen('inicio')">🏠</div>
+<div onclick="showScreen('nutricion')">🍽</div>
+<div onclick="showScreen('deporte')">🏋️</div>
+<div onclick="showScreen('estadisticas')">📊</div>
+</div>
+
+<script>
+
+// ===== CONFIG NUTRICION =====
+let metaCalorias = 3400;
+let metaProteina = 170;
+
+let hoy = new Date();
+let fecha = hoy.toISOString().split("T")[0];
+let diaSemana = hoy.getDay(); // 0 domingo
+
+let historial = JSON.parse(localStorage.getItem("eliteCisneFull")) || {};
+if(!historial[fecha]){
+historial[fecha]={calorias:0,proteina:0,entreno:false};
+}
+let datosHoy = historial[fecha];
+
+// ===== SEMANA PARA ROTACION =====
+function semanaDelAnio(d){
+let inicio=new Date(d.getFullYear(),0,1);
+let dias=Math.floor((d-inicio)/(24*60*60*1000));
+return Math.ceil((d.getDay()+1+dias)/7);
+}
+let rotacion = semanaDelAnio(hoy) % 2;
+
+// ===== RUTINA INTELIGENTE =====
+const rutina = {
+
+1:{ // Lunes
+nombre:"Pecho + Tríceps",
+A:["Press plano barra","Press declinado","Tríceps cuerda","Fondos"],
+B:["Press mancuernas","Cruce polea","Tríceps francés","Extensión unilateral"]
+},
+
+2:{ // Martes
+nombre:"Espalda + Bíceps",
+A:["Polea al pecho","Remo barra","Curl barra","Martillo"],
+B:["Jalón cerrado","Remo mancuerna","Curl Scott","Curl alternado"]
+},
+
+4:{ // Jueves
+nombre:"Piernas + Hombros",
+A:["Sentadilla","Cuádriceps máquina","Press militar","Elevaciones laterales"],
+B:["Prensa","Peso muerto rumano","Press militar mancuerna","Elevaciones frontales"]
+},
+
+5:{ // Viernes
+nombre:"Espalda ligera + Brazos",
+A:["Trapecio barra","Remo liviano","Bíceps concentrado","Tríceps polea"],
+B:["Jalón amplio","Remo máquina","Curl inclinado","Patada tríceps"]
+}
+
 };
 
-// =======================
-// NAVEGACIÓN
-// =======================
-
+// ===== NAVEGACION =====
 function showScreen(id){
 document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-
-if(id==="nutricion") cargarNutricion();    
-if(id==="historial") cargarHistorialSemanal();
-
+if(id==="nutricion") cargarNutricion();
+if(id==="deporte") cargarPlan();
+if(id==="estadisticas") cargarEstadisticas();
 }
 
-// =======================
-// RESUMEN DIARIO
-// =======================
-
+// ===== RESUMEN =====
 function actualizarResumen(){
-document.getElementById("resumenDiario").innerHTML =     <h3>📊 Hoy (${hoy})</h3>     Calorías: ${datosHoy.calorias} / ${metaCalorias}<br>     Proteína: ${datosHoy.proteina}g / ${metaProteina}g<br>     Carbs: ${datosHoy.carbs}g<br>     Grasas: ${datosHoy.grasas}g    ;
+document.getElementById("resumenDiario").innerHTML=`
+Fecha: ${fecha}<br>
+Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
+Proteína: ${datosHoy.proteina}g/${metaProteina}g
+`;
 }
 
-// =======================
-// NUTRICIÓN
-// =======================
-
+// ===== NUTRICION =====
 function cargarNutricion(){
-let html = `
+document.getElementById("nutricionContenido").innerHTML=`
 <div class="card">
-<button onclick="mostrarCategoria('proteinas')">🥩 Proteínas</button>
-<button onclick="mostrarCategoria('carbohidratos')">🍚 Carbohidratos</button>
-<button onclick="mostrarCategoria('grasas')">🥑 Grasas</button>
-</div>
-
-<div class="card">    
-        <h3>Resumen</h3>    
-        Calorías: ${datosHoy.calorias}<br>    
-        Proteína: ${datosHoy.proteina}g    
-    </div>    
-`;    
-
-if(historialAlimentos.length>0){    
-    html+=`<h3>📝 Alimentos de hoy</h3>`;    
-    historialAlimentos.forEach((item,index)=>{    
-        html+=`    
-            <div class="card">    
-                ${item.nombre}    
-                <button onclick="eliminarAlimento(${index})">Eliminar</button>    
-            </div>    
-        `;    
-    });    
-}    
-
-document.getElementById("nutricionContenido").innerHTML=html;
-
+<button onclick="sumar(200,30)">+ Pollo 200g</button>
+<button onclick="sumar(70,6)">+ Huevo</button>
+<button onclick="sumar(300,10)">+ Fideos</button>
+</div>`;
 }
 
-function mostrarCategoria(cat){
-let html=<h3>${cat.toUpperCase()}</h3>;
-alimentos[cat].forEach(a=>{
-html+=    <div class="card">     ${a.nombre}<br>     ${a.calorias} kcal | ${a.proteina}g proteína     <button onclick="agregarAlimento('${cat}','${a.nombre}')">Agregar</button>     </div>    ;
+function sumar(cal,prot){
+datosHoy.calorias+=cal;
+datosHoy.proteina+=prot;
+guardar();
+actualizarResumen();
+}
+
+// ===== PLAN ENTRENAMIENTO =====
+function cargarPlan(){
+
+// Domingo
+if(diaSemana===0){
+document.getElementById("planEntreno").innerHTML=
+`<div class="card">📊 Hoy es día de Estadística</div>`;
+return;
+}
+
+// Miércoles
+if(diaSemana===3){
+document.getElementById("planEntreno").innerHTML=
+`<div class="card">🛌 Hoy toca DESCANSO</div>`;
+return;
+}
+
+// Sábado
+if(diaSemana===6){
+document.getElementById("planEntreno").innerHTML=
+`<div class="card">🫀 Cardio 20-30 minutos</div>`;
+return;
+}
+
+// Días entrenamiento
+let dia = rutina[diaSemana];
+let lista = rotacion===0 ? dia.A : dia.B;
+
+let html=`<div class="card"><b>${dia.nombre}</b><br><br>`;
+lista.forEach(e=>{ html+=`• ${e}<br>`; });
+html+=`<br><button onclick="marcarEntreno()">Marcar como completado</button></div>`;
+
+document.getElementById("planEntreno").innerHTML=html;
+}
+
+function marcarEntreno(){
+datosHoy.entreno=true;
+guardar();
+alert("Entrenamiento guardado 💪");
+}
+
+// ===== ESTADISTICAS =====
+function cargarEstadisticas(){
+let fechas=Object.keys(historial).sort().reverse().slice(0,7);
+
+let totalCal=0,totalProt=0,entrenos=0;
+
+fechas.forEach(f=>{
+totalCal+=historial[f].calorias||0;
+totalProt+=historial[f].proteina||0;
+if(historial[f].entreno) entrenos++;
 });
-document.getElementById("nutricionContenido").innerHTML=html;
+
+document.getElementById("estadisticasContenido").innerHTML=`
+<div class="card">
+Promedio Calorías: ${Math.round(totalCal/(fechas.length||1))}<br>
+Promedio Proteína: ${Math.round(totalProt/(fechas.length||1))}g<br>
+Entrenamientos realizados: ${entrenos}/4
+</div>`;
 }
 
-function agregarAlimento(tipo,nombre){
-const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
-
-historialAlimentos.push({tipo,nombre});    
-
-datosHoy.calorias+=alimento.calorias;    
-datosHoy.proteina+=alimento.proteina;    
-datosHoy.carbs+=alimento.carbs;    
-datosHoy.grasas+=alimento.grasas;    
-
-historial[hoy]=datosHoy;    
-localStorage.setItem("historialCompleto",JSON.stringify(historial));    
-
-cargarNutricion();    
-actualizarResumen();
-
+// ===== GUARDAR =====
+function guardar(){
+historial[fecha]=datosHoy;
+localStorage.setItem("eliteCisneFull",JSON.stringify(historial));
 }
 
-function eliminarAlimento(index){
-const item = historialAlimentos[index];
-const alimento = alimentos[item.tipo].find(a=>a.nombre===item.nombre);
+// ===== FONDO SEGUN CLIMA =====
+function cargarClima(){
+if(!navigator.geolocation) return;
 
-datosHoy.calorias-=alimento.calorias;    
-datosHoy.proteina-=alimento.proteina;    
-datosHoy.carbs-=alimento.carbs;    
-datosHoy.grasas-=alimento.grasas;    
+navigator.geolocation.getCurrentPosition(pos=>{
+let lat=pos.coords.latitude;
+let lon=pos.coords.longitude;
 
-historialAlimentos.splice(index,1);    
+fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+.then(res=>res.json())
+.then(data=>{
+let temp=data.current_weather.temperature;
 
-historial[hoy]=datosHoy;    
-localStorage.setItem("historialCompleto",JSON.stringify(historial));    
-
-cargarNutricion();    
-actualizarResumen();
-
+if(temp<10){
+document.body.style.background="linear-gradient(#001f3f, black)";
+}else if(temp<25){
+document.body.style.background="linear-gradient(#003300, black)";
+}else{
+document.body.style.background="linear-gradient(#660000, black)";
 }
-
-// =======================
-// HISTORIAL SEMANAL
-// =======================
-
-function cargarHistorialSemanal(){
-
-let fechas = Object.keys(historial).sort().reverse();    
-
-let html="";    
-
-fechas.forEach(fecha=>{    
-    let dia = historial[fecha];    
-
-    html+=`    
-        <div class="card">    
-            <h3>${fecha}</h3>    
-            Calorías: ${dia.calorias}<br>    
-            Proteína: ${dia.proteina}g<br>    
-            Carbs: ${dia.carbs}g<br>    
-            Grasas: ${dia.grasas}g    
-        </div>    
-    `;    
-});    
-
-if(fechas.length===0){    
-    html="<div class='card'>No hay registros todavía</div>";    
-}    
-
-document.getElementById("historialContenido").innerHTML=html;
-
+});
+});
 }
-
-// =======================
 
 actualizarResumen();
+cargarClima();
 
-</script>  </body>
-
-</html> 
+</script>
+</body>
+</html>
