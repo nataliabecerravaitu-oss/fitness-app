@@ -191,14 +191,14 @@ const alimentos = {
         {nombre:"Pollo (100g)",calorias:165,proteina:31,carbs:0,grasas:3},
         {nombre:"Carne (100g)",calorias:250,proteina:26,carbs:0,grasas:15},
         {nombre:"Atún",calorias:120,proteina:26,carbs:0,grasas:1},
-        {nombre:"Batido proteína",calorias:120,proteina:25,carbs:3,grasas:1}
+        {nombre:"Batido proteína",calorias:120,proteina:25,carbs:3,grasas:1},
         {nombre:"Pancho (1 unidad)",calorias:150,proteina:6,carbs:2,grasas:13}
     ],
     carbohidratos:[
         {nombre:"Arroz (100g)",calorias:130,proteina:2,carbs:28,grasas:0},
         {nombre:"Papa",calorias:110,proteina:3,carbs:26,grasas:0},
         {nombre:"Fideos (100g)",calorias:140,proteina:5,carbs:27,grasas:1},
-        {nombre:"Avena",calorias:150,proteina:5,carbs:27,grasas:3}
+        {nombre:"Avena",calorias:150,proteina:5,carbs:27,grasas:3},
         {nombre:"Arroz blanco (100g cocido)",calorias:130,proteina:2.5,carbs:28,grasas:0.3},
         {nombre:"Pan (1 rebanada)",calorias:80,proteina:3,carbs:14,grasas:1}
     ],
@@ -218,7 +218,7 @@ const alimentos = {
         {nombre:"Espinaca",calorias:20,proteina:2,carbs:3,grasas:0},
         {nombre:"Zanahoria",calorias:41,proteina:1,carbs:10,grasas:0},
         {nombre:"Tomate",calorias:22,proteina:1,carbs:5,grasas:0},
-        {nombre:"Lechuga",calorias:15,proteina:1,carbs:3,grasas:0}
+        {nombre:"Lechuga",calorias:15,proteina:1,carbs:3,grasas:0},
         {nombre:"Tomate (1 mediano)",calorias:22,proteina:1,carbs:5,grasas:0},
         {nombre:"Cebolla (1 mediana)",calorias:40,proteina:1,carbs:9,grasas:0}
     ]
@@ -388,7 +388,7 @@ function seleccionarEjercicios(musculo){
     if(!ejerciciosPorMusculo[musculo]) return [];
     const lista=ejerciciosPorMusculo[musculo];
     let seleccion=[];
-    while(seleccion.length<Math.min(4,lista.length)){
+    while(seleccion.length<Math.min(3,lista.length)){
         const index=Math.floor(Math.random()*lista.length);
         if(!seleccion.includes(lista[index])) seleccion.push(lista[index]);
     }
@@ -426,7 +426,13 @@ function cargarEjercicios(){
 function guardarEjercicio(key){
     const peso = document.getElementById("peso_"+key).value;
     const reps = document.getElementById("reps_"+key).value;
-    registroEjercicios[key] = {hecho:true,peso,peso: peso || "", reps: reps || ""};
+
+    registroEjercicios[key] = {
+        hecho:true,
+        peso: peso || "",
+        reps: reps || ""
+    };
+
     localStorage.setItem("registroEjercicios",JSON.stringify(registroEjercicios));
     alert("✅ Ejercicio guardado");
 }
