@@ -93,7 +93,6 @@ input[type="number"]{
 <body>
 <header>🔥 Elite Cisne</header>
 
-<!-- INICIO -->
 <div id="inicio" class="screen active">
     <h2>🏠 Inicio</h2>
     <div id="climaBox" class="card"></div>
@@ -105,25 +104,21 @@ input[type="number"]{
     </div>
 </div>
 
-<!-- NUTRICION -->
 <div id="nutricion" class="screen">
     <h2>🍽 Nutrición</h2>
     <div id="nutricionContenido"></div>
 </div>
 
-<!-- EJERCICIO -->
 <div id="ejercicio" class="screen">
     <h2>🏋️ Ejercicio</h2>
     <div id="ejercicioContenido"></div>
 </div>
 
-<!-- MOTIVACION -->
 <div id="motivacion" class="screen">
     <h2>🧠 Motivación</h2>
     <div id="fraseMotivacion" class="card"></div>
 </div>
 
-<!-- ESTADISTICAS -->
 <div id="estadisticas" class="screen">
     <h2>📊 Estadísticas Semanales</h2>
     <div id="estadisticasContenido" class="card"></div>
@@ -138,17 +133,16 @@ input[type="number"]{
 </div>
 
 <script>
-// ===============================
-// CONFIGURACION
-// ===============================
+
 let metaCalorias = 3400;
 let metaProteina = 170;
-let metaAgua = 3000; // ml
+let metaAgua = 3000;
 
 let hoy = new Date().toISOString().split("T")[0];
 
 let historial = JSON.parse(localStorage.getItem("historialCompleto")) || {};
 let registroEjercicios = JSON.parse(localStorage.getItem("registroEjercicios")) || {};
+let rutinaDelDia = JSON.parse(localStorage.getItem("rutinaDelDia")) || {};
 
 if(!historial[hoy]){
     historial[hoy] = {calorias:0,proteina:0,carbs:0,grasas:0,agua:0,alimentos:[]};
@@ -157,10 +151,8 @@ if(!historial[hoy]){
 let datosHoy = historial[hoy];
 let historialAlimentos = datosHoy.alimentos;
 
-// ===============================
-// FONDO Y CLIMA
-// ===============================
 const climaBox = document.getElementById("climaBox");
+
 async function actualizarClima(){
     try{
         const lat = -34.9011, lon = -56.1645;
@@ -170,71 +162,16 @@ async function actualizarClima(){
         const clima = data.weather[0].main;
         const temp = Math.round(data.main.temp);
         climaBox.innerHTML = `🌡 ${temp}°C - ${clima}`;
-        const fondos = [
-            "url('https://i.ibb.co/kB4hS5k/bitcoin1.jpg')",
-            "url('https://i.ibb.co/9YdXhH5/bitcoin2.jpg')",
-            "url('https://i.ibb.co/Z8Q8WZV/crypto3.jpg')"
-        ];
-        document.body.style.backgroundImage = fondos[Math.floor(Math.random()*fondos.length)];
     }catch(e){
         climaBox.innerHTML = "🌡 Clima no disponible";
     }
 }
 actualizarClima();
 
-// ===============================
-// BASE DE ALIMENTOS
-// ===============================
-const alimentos = {
-    proteinas:[
-        {nombre:"Huevo",calorias:70,proteina:6,carbs:0,grasas:5},
-        {nombre:"Pollo (100g)",calorias:165,proteina:31,carbs:0,grasas:3},
-        {nombre:"Carne (100g)",calorias:250,proteina:26,carbs:0,grasas:15},
-        {nombre:"Atún",calorias:120,proteina:26,carbs:0,grasas:1},
-        {nombre:"Batido proteína",calorias:120,proteina:25,carbs:3,grasas:1},
-        {nombre:"Pancho (1 unidad)",calorias:150,proteina:6,carbs:2,grasas:13}
-    ],
-    carbohidratos:[
-        {nombre:"Arroz (100g)",calorias:130,proteina:2,carbs:28,grasas:0},
-        {nombre:"Papa",calorias:110,proteina:3,carbs:26,grasas:0},
-        {nombre:"Fideos (100g)",calorias:140,proteina:5,carbs:27,grasas:1},
-        {nombre:"Avena",calorias:150,proteina:5,carbs:27,grasas:3},
-        {nombre:"Arroz blanco (100g cocido)",calorias:130,proteina:2.5,carbs:28,grasas:0.3},
-        {nombre:"Pan (1 rebanada)",calorias:80,proteina:3,carbs:14,grasas:1}
-    ],
-    grasas:[
-        {nombre:"Palta",calorias:160,proteina:2,carbs:8,grasas:15},
-        {nombre:"Aceite oliva",calorias:120,proteina:0,carbs:0,grasas:14}
-    ],
-    frutas:[
-        {nombre:"Banana",calorias:100,proteina:1,carbs:27,grasas:0},
-        {nombre:"Manzana",calorias:80,proteina:0,carbs:21,grasas:0},
-        {nombre:"Naranja",calorias:60,proteina:1,carbs:15,grasas:0},
-        {nombre:"Frutilla (100g)",calorias:32,proteina:1,carbs:8,grasas:0},
-        {nombre:"Mango",calorias:99,proteina:1,carbs:25,grasas:0}
-    ],
-    verduras:[
-        {nombre:"Brócoli",calorias:55,proteina:4,carbs:11,grasas:0},
-        {nombre:"Espinaca",calorias:20,proteina:2,carbs:3,grasas:0},
-        {nombre:"Zanahoria",calorias:41,proteina:1,carbs:10,grasas:0},
-        {nombre:"Tomate",calorias:22,proteina:1,carbs:5,grasas:0},
-        {nombre:"Lechuga",calorias:15,proteina:1,carbs:3,grasas:0},
-        {nombre:"Tomate (1 mediano)",calorias:22,proteina:1,carbs:5,grasas:0},
-        {nombre:"Cebolla (1 mediana)",calorias:40,proteina:1,carbs:9,grasas:0}
-    ]
-};
-
-// ===============================
-// FUNCIONES GENERALES
-// ===============================
 function showScreen(id){
     document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
     document.getElementById(id).classList.add("active");
-
-    if(id==="nutricion") cargarNutricion();
     if(id==="ejercicio") cargarEjercicios();
-    if(id==="motivacion") cargarMotivacion();
-    if(id==="estadisticas") cargarEstadisticas();
 }
 
 function actualizarResumenInicio(){
@@ -243,122 +180,19 @@ function actualizarResumenInicio(){
         <h3>📊 Resumen Diario</h3>
         Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
         Proteína: ${datosHoy.proteina}g/${metaProteina}g<br>
-        Carbs: ${datosHoy.carbs}g<br>
-        Grasas: ${datosHoy.grasas}g<br>
         Agua: ${datosHoy.agua}ml/${metaAgua}ml
     `;
-    document.getElementById("aguaFill").style.width = Math.min(100,(datosHoy.agua/metaAgua*100))+"%";
+    document.getElementById("aguaFill").style.width =
+        Math.min(100,(datosHoy.agua/metaAgua*100))+"%";
 }
 
-// ===============================
-// AGUA
-// ===============================
 function tomarAgua(){
-    datosHoy.agua += 250; // ml por vaso
+    datosHoy.agua += 250;
     historial[hoy]=datosHoy;
     localStorage.setItem("historialCompleto",JSON.stringify(historial));
     actualizarResumenInicio();
 }
 
-// ===============================
-// NUTRICION
-// ===============================
-function cargarNutricion(){
-    const cont = document.getElementById("nutricionContenido");
-    let html="";
-    for(let cat in alimentos){
-        html += `<div class="card"><button onclick="mostrarCategoria('${cat}')">📌 ${cat.toUpperCase()}</button></div>`;
-    }
-    html += `<div class="card">
-        <h3>Resumen Diario</h3>
-        Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
-        Proteína: ${datosHoy.proteina}g/${metaProteina}g<br>
-        Carbs: ${datosHoy.carbs}g<br>
-        Grasas: ${datosHoy.grasas}g
-    </div>`;
-
-    // Historial
-    if(historialAlimentos.length>0){
-        html += `<h3>📝 Historial de alimentos</h3>`;
-        let cantidades={};
-        historialAlimentos.forEach(a=>{
-            const key=a.tipo+"|"+a.nombre;
-            cantidades[key]=(cantidades[key]||0)+1;
-        });
-        for(let key in cantidades){
-            const [tipo,nombre]=key.split("|");
-            html += `<div class="card"><b>${nombre}</b> x ${cantidades[key]}
-                     <br><button onclick="eliminarAlimento('${tipo}','${nombre}')">Eliminar 1</button></div>`;
-        }
-    }
-
-    cont.innerHTML=html;
-}
-
-function mostrarCategoria(cat){
-    let html=`<h3>${cat.toUpperCase()}</h3>`;
-    alimentos[cat].forEach(a=>{
-        html += `<div class="card">
-            ${a.nombre} - Cal:${a.calorias}, Prot:${a.proteina}g, Carbs:${a.carbs}g, Grasas:${a.grasas}g
-            <br><button onclick="agregarAlimento('${cat}','${a.nombre}')">Agregar</button>
-        </div>`;
-    });
-    document.getElementById("nutricionContenido").innerHTML=html;
-}
-
-function agregarAlimento(tipo,nombre){
-    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
-    historialAlimentos.push({tipo,nombre});
-    datosHoy.calorias += alimento.calorias;
-    datosHoy.proteina += alimento.proteina;
-    datosHoy.carbs += alimento.carbs;
-    datosHoy.grasas += alimento.grasas;
-    historial[hoy]=datosHoy;
-    localStorage.setItem("historialCompleto",JSON.stringify(historial));
-    cargarNutricion();
-    actualizarResumenInicio();
-}
-
-function eliminarAlimento(tipo,nombre){
-    const index = historialAlimentos.findIndex(a=>a.tipo===tipo && a.nombre===nombre);
-    if(index===-1) return;
-    const alimento = alimentos[tipo].find(a=>a.nombre===nombre);
-    datosHoy.calorias -= alimento.calorias;
-    datosHoy.proteina -= alimento.proteina;
-    datosHoy.carbs -= alimento.carbs;
-    datosHoy.grasas -= alimento.grasas;
-    historialAlimentos.splice(index,1);
-    historial[hoy]=datosHoy;
-    localStorage.setItem("historialCompleto",JSON.stringify(historial));
-    cargarNutricion();
-    actualizarResumenInicio();
-}
-
-// ===============================
-// MOTIVACION
-// ===============================
-function cargarMotivacion(){
-    const frases=[
-        "💪 ¡Hoy vas a dar lo mejor de vos!",
-        "🔥 ¡Nada puede detenerte!",
-        "🏋️ ¡Cada esfuerzo suma!",
-        "🌟 ¡Sé la mejor versión de vos hoy!",
-        "⚡ ¡No hay excusas, solo resultados!",
-        "💥 ¡Rompé tus límites!",
-        "🌈 ¡Haz que hoy cuente!"
-    ];
-    const hoyStr = new Date().toISOString().split("T")[0];
-    let fraseHoy=JSON.parse(localStorage.getItem("fraseMotivacionHoy"))||{};
-    if(fraseHoy.fecha!==hoyStr){
-        fraseHoy={fecha:hoyStr,frase:frases[Math.floor(Math.random()*frases.length)]};
-        localStorage.setItem("fraseMotivacionHoy",JSON.stringify(fraseHoy));
-    }
-    document.getElementById("fraseMotivacion").innerHTML=fraseHoy.frase;
-}
-
-// ===============================
-// EJERCICIOS
-// ===============================
 const diasEntreno={
     lunes:{principal:"pecho",secundario:"triceps"},
     martes:{principal:"espalda",secundario:"biceps"},
@@ -398,68 +232,56 @@ function seleccionarEjercicios(musculo){
 function cargarEjercicios(){
     const cont=document.getElementById("ejercicioContenido");
     const dia=obtenerDiaActual();
+
     if(!diasEntreno[dia]){
         cont.innerHTML="<h3>Descanso hoy 😌</h3>";
         return;
     }
+
+    const fechaHoy = new Date().toISOString().split("T")[0];
     const {principal,secundario}=diasEntreno[dia];
-    const ejPrincipal=seleccionarEjercicios(principal);
-    const ejSecundario=seleccionarEjercicios(secundario);
+
+    if(!rutinaDelDia[fechaHoy]){
+        rutinaDelDia[fechaHoy]={
+            principal: seleccionarEjercicios(principal),
+            secundario: secundario ? seleccionarEjercicios(secundario) : []
+        };
+        localStorage.setItem("rutinaDelDia",JSON.stringify(rutinaDelDia));
+    }
+
+    const ejPrincipal=rutinaDelDia[fechaHoy].principal;
+    const ejSecundario=rutinaDelDia[fechaHoy].secundario;
+
     let html=`<h3>💪 ${dia.toUpperCase()}</h3>`;
+
     function bloque(musculo,ejercicios){
         let b=`<h4>${musculo.toUpperCase()}</h4>`;
         ejercicios.forEach(ej=>{
             const key=`${dia}|${musculo}|${ej}`;
             const reg=registroEjercicios[key]||{hecho:false,peso:"",reps:""};
-            b+=`<div class="card"><b>${ej}</b><br>Peso:<input type="number" id="peso_${key}" value="${reg.peso}" placeholder="kg">
+            b+=`<div class="card"><b>${ej}</b><br>
+            Peso:<input type="number" id="peso_${key}" value="${reg.peso}" placeholder="kg">
             Reps:<input type="number" id="reps_${key}" value="${reg.reps}" placeholder="rep">
             <button onclick="guardarEjercicio('${key}')">Guardar</button>
             </div>`;
         });
         return b;
     }
+
     html += bloque(principal,ejPrincipal);
     if(secundario) html += bloque(secundario,ejSecundario);
+
     cont.innerHTML = html;
 }
 
 function guardarEjercicio(key){
-    const peso = document.getElementById("peso_"+key).value;
-    const reps = document.getElementById("reps_"+key).value;
-
-    registroEjercicios[key] = {
-        hecho:true,
-        peso: peso || "",
-        reps: reps || ""
-    };
-
+    const peso=document.getElementById("peso_"+key).value;
+    const reps=document.getElementById("reps_"+key).value;
+    registroEjercicios[key]={hecho:true,peso:peso||"",reps:reps||""};
     localStorage.setItem("registroEjercicios",JSON.stringify(registroEjercicios));
     alert("✅ Ejercicio guardado");
 }
 
-// ===============================
-// ESTADISTICAS SEMANA
-// ===============================
-function cargarEstadisticas(){
-    const cont=document.getElementById("estadisticasContenido");
-    let html="<h3>📅 Últimos 7 días</h3>";
-    const dias = Object.keys(historial).slice(-7);
-    dias.forEach(d=>{
-        const data = historial[d];
-        html+=`<div class="card"><b>${d}</b><br>
-            Calorías: ${data.calorias}/${metaCalorias}<br>
-            Proteína: ${data.proteina}g/${metaProteina}g<br>
-            Carbs: ${data.carbs}g<br>
-            Grasas: ${data.grasas}g<br>
-            Agua: ${data.agua}ml/${metaAgua}ml
-        </div>`;
-    });
-    cont.innerHTML=html;
-}
-
-// ===============================
-// INICIALIZAR
-// ===============================
 actualizarResumenInicio();
 </script>
 </body>
