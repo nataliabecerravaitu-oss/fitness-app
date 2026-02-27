@@ -3,286 +3,324 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Cisne</title>
+<title>Elite Cisne PRO</title>
 
 <style>
-body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:black;
-    color:gold;
-    position: relative;
-    background-size: cover;
-    background-position: center;
-    transition: background 1s ease-in-out;
-}
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.3);
-    z-index: 0;
-    pointer-events: none;
-}
-header{
-    text-align:center;
-    padding:15px;
-    font-size:22px;
-    font-weight:bold;
-}
-.screen{
-    display:none;
-    padding:20px;
-    padding-bottom:100px;
-}
-.active{
-    display:block;
-}
+body{margin:0;font-family:Arial;background:#000;color:gold;}
+header{text-align:center;padding:15px;font-size:22px;font-weight:bold;}
+.screen{display:none;padding:20px;padding-bottom:120px;}
+.active{display:block;}
 .navbar{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:#111;
-    display:flex;
-    justify-content:space-around;
-    padding:10px 0;
-    border-top:2px solid gold;
-}
-.navbar div{
-    cursor:pointer;
-    font-size:20px;
-}
-button{
-    background:gold;
-    color:black;
-    border:none;
-    padding:8px;
-    margin:5px;
-    border-radius:8px;
-    font-weight:bold;
-    cursor:pointer;
-}
-.card{
-    background:#111;
-    padding:15px;
-    margin:10px 0;
-    border-radius:10px;
-}
-input[type="number"]{
-    width:60px;
-}
-.progress{
-    height:20px;
-    background:#333;
-    border-radius:10px;
-    overflow:hidden;
-    margin-top:5px;
-}
-.progress-fill{
-    height:100%;
-    background:gold;
-    width:0%;
-    transition: width 0.3s;
-}
+position:fixed;bottom:0;width:100%;
+background:#111;display:flex;justify-content:space-around;
+padding:10px 0;border-top:2px solid gold;}
+.navbar div{cursor:pointer;font-size:20px;}
+.card{background:#111;padding:15px;margin:10px 0;border-radius:10px;}
+button{background:gold;color:black;border:none;padding:6px 10px;margin:5px;border-radius:6px;font-weight:bold;cursor:pointer;}
+input{margin:5px;padding:5px;border-radius:5px;border:none;}
+.progress{height:18px;background:#333;border-radius:10px;overflow:hidden;margin-top:5px;}
+.fill{height:100%;background:gold;width:0%;}
+.small{font-size:12px;color:#aaa;}
 </style>
 </head>
-
 <body>
-<header>🔥 Elite Cisne</header>
+
+<header>🔥 Elite Cisne PRO</header>
 
 <div id="inicio" class="screen active">
-    <h2>🏠 Inicio</h2>
-    <div id="climaBox" class="card"></div>
-    <div id="resumenDiario" class="card"></div>
-    <div class="card">
-        <h3>💧 Agua diaria</h3>
-        <div id="aguaBox" class="progress"><div id="aguaFill" class="progress-fill"></div></div>
-        <button onclick="tomarAgua()">Agregar vaso</button>
-    </div>
+<h2>Inicio</h2>
+<input type="date" id="fechaSelector">
+<div id="resumen" class="card"></div>
+
+<div class="card">
+<h3>💧 Agua</h3>
+<div class="progress"><div id="aguaBar" class="fill"></div></div>
+<button onclick="agregarAgua()">+250ml</button>
+</div>
+
+<div class="card">
+<h3>⚖ Peso corporal</h3>
+<input type="number" id="pesoInput" placeholder="kg" min="0" step="0.1">
+<button onclick="guardarPeso()">Guardar</button>
+<div id="pesoHistorial" class="small"></div>
+</div>
 </div>
 
 <div id="nutricion" class="screen">
-    <h2>🍽 Nutrición</h2>
-    <div id="nutricionContenido"></div>
+<h2>Nutrición</h2>
+<div id="alimentosBotones"></div>
+<div class="card">
+<h3>Alimentos de hoy</h3>
+<div id="listaAlimentos"></div>
+</div>
 </div>
 
 <div id="ejercicio" class="screen">
-    <h2>🏋️ Ejercicio</h2>
-    <div id="ejercicioContenido"></div>
-</div>
-
-<div id="motivacion" class="screen">
-    <h2>🧠 Motivación</h2>
-    <div id="fraseMotivacion" class="card"></div>
+<h2>Rutina del día</h2>
+<div id="rutinaBox"></div>
 </div>
 
 <div id="estadisticas" class="screen">
-    <h2>📊 Estadísticas Semanales</h2>
-    <div id="estadisticasContenido" class="card"></div>
+<h2>Estadísticas</h2>
+<div id="estadisticasBox" class="card"></div>
 </div>
 
 <div class="navbar">
-    <div onclick="showScreen('inicio')">🏠</div>
-    <div onclick="showScreen('nutricion')">🍽</div>
-    <div onclick="showScreen('ejercicio')">🏋️</div>
-    <div onclick="showScreen('motivacion')">🧠</div>
-    <div onclick="showScreen('estadisticas')">📊</div>
+<div onclick="mostrar('inicio')">🏠</div>
+<div onclick="mostrar('nutricion')">🍽</div>
+<div onclick="mostrar('ejercicio')">🏋️</div>
+<div onclick="mostrar('estadisticas')">📊</div>
 </div>
 
 <script>
 
-let metaCalorias = 3400;
-let metaProteina = 170;
-let metaAgua = 3000;
+/* ================== CONFIG ================== */
 
-let hoy = new Date().toISOString().split("T")[0];
+const META_CAL = 3400;
+const META_PROT = 170;
+const META_AGUA = 3000;
 
-let historial = JSON.parse(localStorage.getItem("historialCompleto")) || {};
-let registroEjercicios = JSON.parse(localStorage.getItem("registroEjercicios")) || {};
-let rutinaDelDia = JSON.parse(localStorage.getItem("rutinaDelDia")) || {};
+/* ================== STORAGE ================== */
 
-if(!historial[hoy]){
-    historial[hoy] = {calorias:0,proteina:0,carbs:0,grasas:0,agua:0,alimentos:[]};
+let historial = JSON.parse(localStorage.getItem("historial")) || {};
+let historialEj = JSON.parse(localStorage.getItem("historialEj")) || {};
+let historialPeso = JSON.parse(localStorage.getItem("historialPeso")) || {};
+
+let fechaActual = new Date().toISOString().split("T")[0];
+document.getElementById("fechaSelector").value = fechaActual;
+
+if(!historial[fechaActual]) crearDia(fechaActual);
+
+/* ================== UTIL ================== */
+
+function clamp(value,min,max){
+return Math.max(min,Math.min(max,value));
 }
 
-let datosHoy = historial[hoy];
-let historialAlimentos = datosHoy.alimentos;
-
-const climaBox = document.getElementById("climaBox");
-
-async function actualizarClima(){
-    try{
-        const lat = -34.9011, lon = -56.1645;
-        const apiKey = "ec3ea0af99e26dc4338f449647f4644a";
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`);
-        const data = await res.json();
-        const clima = data.weather[0].main;
-        const temp = Math.round(data.main.temp);
-        climaBox.innerHTML = `🌡 ${temp}°C - ${clima}`;
-    }catch(e){
-        climaBox.innerHTML = "🌡 Clima no disponible";
-    }
-}
-actualizarClima();
-
-function showScreen(id){
-    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-    if(id==="ejercicio") cargarEjercicios();
+function guardarTodo(){
+localStorage.setItem("historial",JSON.stringify(historial));
+localStorage.setItem("historialEj",JSON.stringify(historialEj));
+localStorage.setItem("historialPeso",JSON.stringify(historialPeso));
 }
 
-function actualizarResumenInicio(){
-    const box = document.getElementById("resumenDiario");
-    box.innerHTML = `
-        <h3>📊 Resumen Diario</h3>
-        Calorías: ${datosHoy.calorias}/${metaCalorias}<br>
-        Proteína: ${datosHoy.proteina}g/${metaProteina}g<br>
-        Agua: ${datosHoy.agua}ml/${metaAgua}ml
-    `;
-    document.getElementById("aguaFill").style.width =
-        Math.min(100,(datosHoy.agua/metaAgua*100))+"%";
+/* ================== FECHA ================== */
+
+document.getElementById("fechaSelector").addEventListener("change",e=>{
+fechaActual = e.target.value;
+if(!historial[fechaActual]) crearDia(fechaActual);
+render();
+});
+
+function crearDia(fecha){
+historial[fecha] = {
+cal:0, prot:0, carb:0, grasa:0, agua:0, alimentos:[]
+};
+guardarTodo();
 }
 
-function tomarAgua(){
-    datosHoy.agua += 250;
-    historial[hoy]=datosHoy;
-    localStorage.setItem("historialCompleto",JSON.stringify(historial));
-    actualizarResumenInicio();
+/* ================== NAVEGACIÓN ================== */
+
+function mostrar(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+render();
 }
 
-const diasEntreno={
-    lunes:{principal:"pecho",secundario:"triceps"},
-    martes:{principal:"espalda",secundario:"biceps"},
-    jueves:{principal:"piernas",secundario:"hombros"},
-    viernes:{principal:"core",secundario:"abdominales"},
-    sabado:{principal:"cardio",secundario:""}
+/* ================== RESUMEN ================== */
+
+function renderResumen(){
+const d = historial[fechaActual];
+
+const calPct = clamp((d.cal/META_CAL)*100,0,100);
+const protPct = clamp((d.prot/META_PROT)*100,0,100);
+const aguaPct = clamp((d.agua/META_AGUA)*100,0,100);
+
+document.getElementById("resumen").innerHTML = `
+🔥 ${d.cal}/${META_CAL} cal
+<div class="progress"><div class="fill" style="width:${calPct}%"></div></div>
+💪 ${d.prot}/${META_PROT} g
+<div class="progress"><div class="fill" style="width:${protPct}%"></div></div>
+`;
+
+document.getElementById("aguaBar").style.width = aguaPct+"%";
+}
+
+/* ================== AGUA ================== */
+
+function agregarAgua(){
+historial[fechaActual].agua += 250;
+guardarTodo();
+renderResumen();
+}
+
+/* ================== PESO ================== */
+
+function guardarPeso(){
+const val = parseFloat(document.getElementById("pesoInput").value);
+if(isNaN(val) || val <= 0) return;
+
+historialPeso[fechaActual] = val;
+guardarTodo();
+renderPeso();
+}
+
+function renderPeso(){
+let fechas = Object.keys(historialPeso).sort();
+let html="";
+fechas.forEach(f=>{
+html += `${f}: ${historialPeso[f]} kg<br>`;
+});
+document.getElementById("pesoHistorial").innerHTML = html;
+}
+
+/* ================== NUTRICIÓN ================== */
+
+const alimentos = [
+{n:"Huevo",c:70,p:6,carb:0,g:5},
+{n:"Pollo 100g",c:165,p:31,carb:0,g:4},
+{n:"Arroz 100g",c:130,p:2,carb:28,g:0},
+{n:"Banana",c:105,p:1,carb:27,g:0},
+{n:"Aceite oliva",c:120,p:0,carb:0,g:14}
+];
+
+function renderAlimentosBotones(){
+let html="";
+alimentos.forEach((a,i)=>{
+html+=`<button onclick="agregarAlimento(${i})">${a.n}</button>`;
+});
+document.getElementById("alimentosBotones").innerHTML=html;
+}
+
+function agregarAlimento(index){
+const a = alimentos[index];
+const d = historial[fechaActual];
+
+d.cal += a.c;
+d.prot += a.p;
+d.carb += a.carb;
+d.grasa += a.g;
+d.alimentos.push({...a});
+
+guardarTodo();
+render();
+}
+
+function eliminarAlimento(index){
+const d = historial[fechaActual];
+const a = d.alimentos[index];
+
+d.cal -= a.c;
+d.prot -= a.p;
+d.carb -= a.carb;
+d.grasa -= a.g;
+
+d.cal = Math.max(0,d.cal);
+d.prot = Math.max(0,d.prot);
+d.carb = Math.max(0,d.carb);
+d.grasa = Math.max(0,d.grasa);
+
+d.alimentos.splice(index,1);
+guardarTodo();
+render();
+}
+
+function renderListaAlimentos(){
+const d = historial[fechaActual];
+let html="";
+d.alimentos.forEach((a,i)=>{
+html+=`${a.n} <button onclick="eliminarAlimento(${i})">❌</button><br>`;
+});
+document.getElementById("listaAlimentos").innerHTML=html;
+}
+
+/* ================== RUTINA ================== */
+
+const rutinaSemana = {
+0:["Descanso"],
+1:["Press_banca","Fondos","Aperturas"],
+2:["Espalda_barra","Dominadas","Remo"],
+3:["Sentadilla","Prensa","Peso_muerto"],
+4:["Press_militar","Elevaciones","Pajaros"],
+5:["Curl_biceps","Triceps_polea","Martillo"],
+6:["Full_body_ligero"]
 };
 
-const ejerciciosPorMusculo={
-    pecho:["Press barra","Press mancuernas","Aperturas mancuernas","Fondos paralelas","Press inclinado"],
-    triceps:["Polea alta","Extensiones manc","Fondos banco","Press francés barra","Cuerda polea"],
-    espalda:["Remo barra","Remo manc","Jalón al pecho","Peso muerto","Pull-over manc"],
-    biceps:["Curl barra","Curl manc","Curl martillo","Curl predicador","Curl concentrado"],
-    piernas:["Sentadilla","Prensa","Zancadas","Peso muerto piernas rígidas","Extensión pierna"],
-    hombros:["Press militar barra","Elevaciones laterales","Elevaciones frontales","Pájaros","Arnold press"],
-    abdominales:["Crunch","Elevación piernas","Plancha","Bicicleta","Russian twist"],
-    core:["Plancha","Crunch","Bicicleta","Elevación piernas","Russian twist"],
-    cardio:["Cinta","Bicicleta","Elíptica","Saltos cuerda"]
-};
+function renderRutina(){
+let dia = new Date(fechaActual+"T00:00:00").getDay();
+let rutina = rutinaSemana[dia] || [];
+let html="";
 
-function obtenerDiaActual(){
-    const dias=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-    return dias[new Date().getDay()];
+rutina.forEach(nombre=>{
+if(nombre==="Descanso"){
+html+=`<div class="card">Día de descanso</div>`;
+return;
 }
 
-function seleccionarEjercicios(musculo){
-    if(!ejerciciosPorMusculo[musculo]) return [];
-    const lista=ejerciciosPorMusculo[musculo];
-    let seleccion=[];
-    while(seleccion.length<Math.min(3,lista.length)){
-        const index=Math.floor(Math.random()*lista.length);
-        if(!seleccion.includes(lista[index])) seleccion.push(lista[index]);
-    }
-    return seleccion;
+if(!historialEj[nombre]) historialEj[nombre]=[];
+
+let ultimo = historialEj[nombre].slice(-1)[0];
+
+html+=`
+<div class="card">
+<b>${nombre.replaceAll("_"," ")}</b><br>
+<input type="number" id="peso_${nombre}" placeholder="Peso" min="0">
+<input type="number" id="reps_${nombre}" placeholder="Reps" min="0">
+<button onclick="guardarEjercicio('${nombre}')">Guardar</button>
+<div class="small">
+Último: ${ultimo ? ultimo.peso+"kg x "+ultimo.reps : "-"}
+</div>
+</div>
+`;
+});
+
+document.getElementById("rutinaBox").innerHTML=html;
 }
 
-function cargarEjercicios(){
-    const cont=document.getElementById("ejercicioContenido");
-    const dia=obtenerDiaActual();
+function guardarEjercicio(nombre){
+const peso = parseFloat(document.getElementById("peso_"+nombre).value);
+const reps = parseInt(document.getElementById("reps_"+nombre).value);
 
-    if(!diasEntreno[dia]){
-        cont.innerHTML="<h3>Descanso hoy 😌</h3>";
-        return;
-    }
+if(isNaN(peso) || isNaN(reps) || peso<=0 || reps<=0) return;
 
-    const fechaHoy = new Date().toISOString().split("T")[0];
-    const {principal,secundario}=diasEntreno[dia];
+if(!historialEj[nombre]) historialEj[nombre]=[];
 
-    if(!rutinaDelDia[fechaHoy]){
-        rutinaDelDia[fechaHoy]={
-            principal: seleccionarEjercicios(principal),
-            secundario: secundario ? seleccionarEjercicios(secundario) : []
-        };
-        localStorage.setItem("rutinaDelDia",JSON.stringify(rutinaDelDia));
-    }
+historialEj[nombre].push({
+fecha:fechaActual,
+peso,
+reps
+});
 
-    const ejPrincipal=rutinaDelDia[fechaHoy].principal;
-    const ejSecundario=rutinaDelDia[fechaHoy].secundario;
-
-    let html=`<h3>💪 ${dia.toUpperCase()}</h3>`;
-
-    function bloque(musculo,ejercicios){
-        let b=`<h4>${musculo.toUpperCase()}</h4>`;
-        ejercicios.forEach(ej=>{
-            const key=`${dia}|${musculo}|${ej}`;
-            const reg=registroEjercicios[key]||{hecho:false,peso:"",reps:""};
-            b+=`<div class="card"><b>${ej}</b><br>
-            Peso:<input type="number" id="peso_${key}" value="${reg.peso}" placeholder="kg">
-            Reps:<input type="number" id="reps_${key}" value="${reg.reps}" placeholder="rep">
-            <button onclick="guardarEjercicio('${key}')">Guardar</button>
-            </div>`;
-        });
-        return b;
-    }
-
-    html += bloque(principal,ejPrincipal);
-    if(secundario) html += bloque(secundario,ejSecundario);
-
-    cont.innerHTML = html;
+guardarTodo();
+renderRutina();
 }
 
-function guardarEjercicio(key){
-    const peso=document.getElementById("peso_"+key).value;
-    const reps=document.getElementById("reps_"+key).value;
-    registroEjercicios[key]={hecho:true,peso:peso||"",reps:reps||""};
-    localStorage.setItem("registroEjercicios",JSON.stringify(registroEjercicios));
-    alert("✅ Ejercicio guardado");
+/* ================== ESTADÍSTICAS ================== */
+
+function renderStats(){
+let dias = Object.keys(historial);
+let totalCal = dias.reduce((acc,f)=>acc+historial[f].cal,0);
+let promedio = dias.length ? Math.round(totalCal/dias.length) : 0;
+
+document.getElementById("estadisticasBox").innerHTML = `
+Días registrados: ${dias.length}<br>
+Calorías totales: ${totalCal}<br>
+Promedio diario: ${promedio}
+`;
 }
 
-actualizarResumenInicio();
+/* ================== RENDER GLOBAL ================== */
+
+function render(){
+renderResumen();
+renderAlimentosBotones();
+renderListaAlimentos();
+renderRutina();
+renderStats();
+renderPeso();
+}
+
+render();
+
 </script>
 </body>
 </html>
