@@ -73,111 +73,84 @@ input{margin:5px;padding:5px;border-radius:5px;border:none;}
 </div>
 
 <script>
-
 /* ================== CONFIG ================== */
-
 const META_CAL = 3400;
 const META_PROT = 170;
 const META_AGUA = 3000;
 
 /* ================== STORAGE ================== */
-
 let historial = JSON.parse(localStorage.getItem("historial")) || {};
 let historialEj = JSON.parse(localStorage.getItem("historialEj")) || {};
 let historialPeso = JSON.parse(localStorage.getItem("historialPeso")) || {};
+let rutinaDia = JSON.parse(localStorage.getItem("rutinaDia")) || {};
 
 let fechaActual = new Date().toISOString().split("T")[0];
 document.getElementById("fechaSelector").value = fechaActual;
-
 if(!historial[fechaActual]) crearDia(fechaActual);
 
 /* ================== UTIL ================== */
-
-function clamp(value,min,max){
-return Math.max(min,Math.min(max,value));
-}
-
+function clamp(value,min,max){ return Math.max(min,Math.min(max,value)); }
 function guardarTodo(){
-localStorage.setItem("historial",JSON.stringify(historial));
-localStorage.setItem("historialEj",JSON.stringify(historialEj));
-localStorage.setItem("historialPeso",JSON.stringify(historialPeso));
+    localStorage.setItem("historial",JSON.stringify(historial));
+    localStorage.setItem("historialEj",JSON.stringify(historialEj));
+    localStorage.setItem("historialPeso",JSON.stringify(historialPeso));
+    localStorage.setItem("rutinaDia",JSON.stringify(rutinaDia));
 }
 
 /* ================== FECHA ================== */
-
 document.getElementById("fechaSelector").addEventListener("change",e=>{
-fechaActual = e.target.value;
-if(!historial[fechaActual]) crearDia(fechaActual);
-render();
+    fechaActual = e.target.value;
+    if(!historial[fechaActual]) crearDia(fechaActual);
+    render();
 });
-
 function crearDia(fecha){
-historial[fecha] = {
-cal:0, prot:0, carb:0, grasa:0, agua:0, alimentos:[]
-};
-guardarTodo();
+    historial[fecha] = {cal:0, prot:0, carb:0, grasa:0, agua:0, alimentos:[]};
+    guardarTodo();
 }
 
 /* ================== NAVEGACIÓN ================== */
-
 function mostrar(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-render();
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    render();
 }
 
 /* ================== RESUMEN ================== */
-
 function renderResumen(){
-const d = historial[fechaActual];
+    const d = historial[fechaActual];
+    const calPct = clamp((d.cal/META_CAL)*100,0,100);
+    const protPct = clamp((d.prot/META_PROT)*100,0,100);
+    const aguaPct = clamp((d.agua/META_AGUA)*100,0,100);
 
-const calPct = clamp((d.cal/META_CAL)*100,0,100);
-const protPct = clamp((d.prot/META_PROT)*100,0,100);
-const aguaPct = clamp((d.agua/META_AGUA)*100,0,100);
-
-document.getElementById("resumen").innerHTML = `
+    document.getElementById("resumen").innerHTML = `
 🔥 ${d.cal}/${META_CAL} cal
 <div class="progress"><div class="fill" style="width:${calPct}%"></div></div>
 💪 ${d.prot}/${META_PROT} g
 <div class="progress"><div class="fill" style="width:${protPct}%"></div></div>
 `;
-
-document.getElementById("aguaBar").style.width = aguaPct+"%";
+    document.getElementById("aguaBar").style.width = aguaPct+"%";
 }
 
 /* ================== AGUA ================== */
-
-function agregarAgua(){
-historial[fechaActual].agua += 250;
-guardarTodo();
-renderResumen();
-}
+function agregarAgua(){ historial[fechaActual].agua += 250; guardarTodo(); renderResumen(); }
 
 /* ================== PESO ================== */
-
 function guardarPeso(){
-const val = parseFloat(document.getElementById("pesoInput").value);
-if(isNaN(val) || val <= 0) return;
-
-historialPeso[fechaActual] = val;
-guardarTodo();
-renderPeso();
+    const val = parseFloat(document.getElementById("pesoInput").value);
+    if(isNaN(val) || val <=0) return;
+    historialPeso[fechaActual] = val;
+    guardarTodo();
+    renderPeso();
 }
-
 function renderPeso(){
-let fechas = Object.keys(historialPeso).sort();
-let html="";
-fechas.forEach(f=>{
-html += `${f}: ${historialPeso[f]} kg<br>`;
-});
-document.getElementById("pesoHistorial").innerHTML = html;
+    let fechas = Object.keys(historialPeso).sort();
+    let html="";
+    fechas.forEach(f=>{html+=`${f}: ${historialPeso[f]} kg<br>`});
+    document.getElementById("pesoHistorial").innerHTML = html;
 }
 
 /* ================== NUTRICIÓN ================== */
-
-/* Valores promedio reales por 100g (o unidad indicada) */
 const categorias = {
-
 Proteinas: [
 {n:"Pollo pechuga 100g", c:165, p:31, carb:0, g:3.6},
 {n:"Carne magra 100g", c:250, p:26, carb:0, g:15},
@@ -187,7 +160,6 @@ Proteinas: [
 {n:"Huevo (1 unidad)", c:70, p:6, carb:0.6, g:5},
 {n:"Clara de huevo", c:17, p:3.6, carb:0.2, g:0}
 ],
-
 Carbohidratos: [
 {n:"Arroz blanco 100g", c:130, p:2.4, carb:28, g:0.3},
 {n:"Avena 100g", c:389, p:17, carb:66, g:7},
@@ -197,7 +169,6 @@ Carbohidratos: [
 {n:"Pasta 100g", c:131, p:5, carb:25, g:1.1},
 {n:"Quinoa 100g", c:120, p:4, carb:21, g:1.9}
 ],
-
 Grasas: [
 {n:"Aceite de oliva 10g", c:88, p:0, carb:0, g:10},
 {n:"Manteca 10g", c:72, p:0.1, carb:0, g:8},
@@ -207,7 +178,6 @@ Grasas: [
 {n:"Maní 30g", c:170, p:7, carb:6, g:14},
 {n:"Queso 100g", c:402, p:25, carb:1.3, g:33}
 ],
-
 Frutas: [
 {n:"Banana 100g", c:89, p:1.1, carb:23, g:0.3},
 {n:"Manzana 100g", c:52, p:0.3, carb:14, g:0.2},
@@ -217,7 +187,6 @@ Frutas: [
 {n:"Ananá 100g", c:50, p:0.5, carb:13, g:0.1},
 {n:"Kiwi 100g", c:61, p:1.1, carb:15, g:0.5}
 ],
-
 Vegetales: [
 {n:"Brócoli 100g", c:34, p:2.8, carb:7, g:0.4},
 {n:"Zanahoria 100g", c:41, p:0.9, carb:10, g:0.2},
@@ -227,34 +196,17 @@ Vegetales: [
 {n:"Pepino 100g", c:16, p:0.7, carb:3.6, g:0.1},
 {n:"Morrón 100g", c:31, p:1, carb:6, g:0.3}
 ]
-
 };
 
 function renderAlimentosBotones(){
-
 let html = "";
-
 Object.keys(categorias).forEach(cat=>{
-
-html += `
-<div class="card">
-<h3 onclick="toggleCategoria('${cat}')" style="cursor:pointer">
-${cat}
-</h3>
-<div id="cat_${cat}" style="display:none">
-`;
-
+html += `<div class="card"><h3 onclick="toggleCategoria('${cat}')" style="cursor:pointer">${cat}</h3><div id="cat_${cat}" style="display:none">`;
 categorias[cat].forEach((a,i)=>{
-html += `
-<button onclick="agregarAlimentoCategoria('${cat}',${i})">
-${a.n}
-</button>
-`;
+html += `<button onclick="agregarAlimentoCategoria('${cat}',${i})">${a.n}</button>`;
 });
-
 html += `</div></div>`;
 });
-
 document.getElementById("alimentosBotones").innerHTML = html;
 }
 
@@ -264,62 +216,35 @@ el.style.display = el.style.display === "none" ? "block" : "none";
 }
 
 function agregarAlimentoCategoria(cat,index){
-
 const base = categorias[cat][index];
 let d = historial[fechaActual];
-
-// Detectar si el alimento es por 100g
 let esPor100g = base.n.includes("100g");
-
-// Si es por 100g → pedir gramos
 if(esPor100g){
-
 let gramos = prompt("¿Cuántos gramos consumiste?", "100");
-
 if(!gramos) return;
-
 gramos = parseFloat(gramos);
-
-if(isNaN(gramos) || gramos <= 0){
-alert("Cantidad inválida");
-return;
-}
-
-// Calcular proporcional
-let factor = gramos / 100;
-
-let alimentoCalculado = {
-n: base.n.replace("100g", gramos+"g"),
-c: +(base.c * factor).toFixed(2),
-p: +(base.p * factor).toFixed(2),
-carb: +(base.carb * factor).toFixed(2),
-g: +(base.g * factor).toFixed(2)
-};
-
-d.cal += alimentoCalculado.c;
-d.prot += alimentoCalculado.p;
-d.carb += alimentoCalculado.carb;
-d.grasa += alimentoCalculado.g;
-
+if(isNaN(gramos)||gramos<=0){alert("Cantidad inválida");return;}
+let factor = gramos/100;
+let alimentoCalculado = {n: base.n.replace("100g", gramos+"g"), c: +(base.c*factor).toFixed(2), p: +(base.p*factor).toFixed(2), carb: +(base.carb*factor).toFixed(2), g: +(base.g*factor).toFixed(2)};
+d.cal += alimentoCalculado.c; d.prot += alimentoCalculado.p; d.carb += alimentoCalculado.carb; d.grasa += alimentoCalculado.g;
 d.alimentos.push(alimentoCalculado);
-
 }else{
-
-// Si es por unidad fija (ej: huevo)
-d.cal += base.c;
-d.prot += base.p;
-d.carb += base.carb;
-d.grasa += base.g;
-
+d.cal += base.c; d.prot += base.p; d.carb += base.carb; d.grasa += base.g;
 d.alimentos.push({...base});
 }
+guardarTodo(); render();
+}
 
-guardarTodo();
-render();
+function renderListaAlimentos(){
+const lista = historial[fechaActual].alimentos;
+let html="";
+lista.forEach(a=>{
+html += `${a.n}: ${a.c} cal, ${a.p} g proteína<br>`;
+});
+document.getElementById("listaAlimentos").innerHTML = html;
 }
 
 /* ================== RUTINA ================== */
-
 const rutinaSemana = {
 0:["Descanso"],
 1:["Press_banca","Fondos","Aperturas"],
@@ -332,69 +257,54 @@ const rutinaSemana = {
 
 function renderRutina(){
 let dia = new Date(fechaActual+"T00:00:00").getDay();
-let rutina = rutinaSemana[dia] || [];
+if(!rutinaDia[fechaActual]) rutinaDia[fechaActual] = rutinaSemana[dia];
+let rutina = rutinaDia[fechaActual] || [];
 let html="";
-
 rutina.forEach(nombre=>{
-if(nombre==="Descanso"){
-html+=`<div class="card">Día de descanso</div>`;
-return;
-}
-
+if(nombre==="Descanso"){ html+=`<div class="card">Día de descanso</div>`; return;}
 if(!historialEj[nombre]) historialEj[nombre]=[];
-
 let ultimo = historialEj[nombre].slice(-1)[0];
-
 html+=`
 <div class="card">
 <b>${nombre.replaceAll("_"," ")}</b><br>
 <input type="number" id="peso_${nombre}" placeholder="Peso" min="0">
 <input type="number" id="reps_${nombre}" placeholder="Reps" min="0">
 <button onclick="guardarEjercicio('${nombre}')">Guardar</button>
-<div class="small">
-Último: ${ultimo ? ultimo.peso+"kg x "+ultimo.reps : "-"}
-</div>
+<div class="small">Último: ${ultimo ? ultimo.peso+"kg x "+ultimo.reps : "-"}</div>
 </div>
 `;
 });
-
 document.getElementById("rutinaBox").innerHTML=html;
 }
 
 function guardarEjercicio(nombre){
 const peso = parseFloat(document.getElementById("peso_"+nombre).value);
 const reps = parseInt(document.getElementById("reps_"+nombre).value);
-
-if(isNaN(peso) || isNaN(reps) || peso<=0 || reps<=0) return;
-
+if(isNaN(peso)||isNaN(reps)||peso<=0||reps<=0) return;
 if(!historialEj[nombre]) historialEj[nombre]=[];
-
-historialEj[nombre].push({
-fecha:fechaActual,
-peso,
-reps
-});
-
-guardarTodo();
-renderRutina();
+historialEj[nombre].push({fecha:fechaActual, peso, reps});
+guardarTodo(); renderRutina();
 }
 
 /* ================== ESTADÍSTICAS ================== */
-
 function renderStats(){
 let dias = Object.keys(historial);
 let totalCal = dias.reduce((acc,f)=>acc+historial[f].cal,0);
+let totalProt = dias.reduce((acc,f)=>acc+historial[f].prot,0);
+let totalCarb = dias.reduce((acc,f)=>acc+historial[f].carb,0);
+let totalGrasa = dias.reduce((acc,f)=>acc+historial[f].grasa,0);
 let promedio = dias.length ? Math.round(totalCal/dias.length) : 0;
-
 document.getElementById("estadisticasBox").innerHTML = `
 Días registrados: ${dias.length}<br>
 Calorías totales: ${totalCal}<br>
+Proteína total: ${totalProt} g<br>
+Carbohidratos totales: ${totalCarb} g<br>
+Grasas totales: ${totalGrasa} g<br>
 Promedio diario: ${promedio}
 `;
 }
 
 /* ================== RENDER GLOBAL ================== */
-
 function render(){
 renderResumen();
 renderAlimentosBotones();
