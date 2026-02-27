@@ -175,62 +175,147 @@ document.getElementById("pesoHistorial").innerHTML = html;
 
 /* ================== NUTRICIÓN ================== */
 
-const alimentos = [
-{n:"Huevo",c:70,p:6,carb:0,g:5},
-{n:"Pollo 100g",c:165,p:31,carb:0,g:4},
-{n:"Arroz 100g",c:130,p:2,carb:28,g:0},
-{n:"Banana",c:105,p:1,carb:27,g:0},
-{n:"Aceite oliva",c:120,p:0,carb:0,g:14}
-];
+/* Valores promedio reales por 100g (o unidad indicada) */
+const categorias = {
+
+Proteinas: [
+{n:"Pollo pechuga 100g", c:165, p:31, carb:0, g:3.6},
+{n:"Carne magra 100g", c:250, p:26, carb:0, g:15},
+{n:"Carne picada 100g", c:254, p:17, carb:0, g:20},
+{n:"Pescado blanco 100g", c:96, p:20, carb:0, g:2},
+{n:"Atún 100g", c:132, p:28, carb:0, g:1},
+{n:"Huevo (1 unidad)", c:70, p:6, carb:0.6, g:5},
+{n:"Clara de huevo", c:17, p:3.6, carb:0.2, g:0}
+],
+
+Carbohidratos: [
+{n:"Arroz blanco 100g", c:130, p:2.4, carb:28, g:0.3},
+{n:"Avena 100g", c:389, p:17, carb:66, g:7},
+{n:"Papa 100g", c:77, p:2, carb:17, g:0.1},
+{n:"Batata 100g", c:86, p:1.6, carb:20, g:0.1},
+{n:"Pan blanco 100g", c:265, p:9, carb:49, g:3.2},
+{n:"Pasta 100g", c:131, p:5, carb:25, g:1.1},
+{n:"Quinoa 100g", c:120, p:4, carb:21, g:1.9}
+],
+
+Grasas: [
+{n:"Aceite de oliva 10g", c:88, p:0, carb:0, g:10},
+{n:"Manteca 10g", c:72, p:0.1, carb:0, g:8},
+{n:"Palta 100g", c:160, p:2, carb:9, g:15},
+{n:"Almendras 30g", c:174, p:6, carb:6, g:15},
+{n:"Nueces 30g", c:196, p:4.5, carb:4, g:20},
+{n:"Maní 30g", c:170, p:7, carb:6, g:14},
+{n:"Queso 100g", c:402, p:25, carb:1.3, g:33}
+],
+
+Frutas: [
+{n:"Banana 100g", c:89, p:1.1, carb:23, g:0.3},
+{n:"Manzana 100g", c:52, p:0.3, carb:14, g:0.2},
+{n:"Naranja 100g", c:47, p:0.9, carb:12, g:0.1},
+{n:"Frutilla 100g", c:32, p:0.7, carb:8, g:0.3},
+{n:"Mango 100g", c:60, p:0.8, carb:15, g:0.4},
+{n:"Ananá 100g", c:50, p:0.5, carb:13, g:0.1},
+{n:"Kiwi 100g", c:61, p:1.1, carb:15, g:0.5}
+],
+
+Vegetales: [
+{n:"Brócoli 100g", c:34, p:2.8, carb:7, g:0.4},
+{n:"Zanahoria 100g", c:41, p:0.9, carb:10, g:0.2},
+{n:"Tomate 100g", c:18, p:0.9, carb:3.9, g:0.2},
+{n:"Espinaca 100g", c:23, p:2.9, carb:3.6, g:0.4},
+{n:"Lechuga 100g", c:15, p:1.4, carb:2.9, g:0.2},
+{n:"Pepino 100g", c:16, p:0.7, carb:3.6, g:0.1},
+{n:"Morrón 100g", c:31, p:1, carb:6, g:0.3}
+]
+
+};
 
 function renderAlimentosBotones(){
-let html="";
-alimentos.forEach((a,i)=>{
-html+=`<button onclick="agregarAlimento(${i})">${a.n}</button>`;
+
+let html = "";
+
+Object.keys(categorias).forEach(cat=>{
+
+html += `
+<div class="card">
+<h3 onclick="toggleCategoria('${cat}')" style="cursor:pointer">
+${cat}
+</h3>
+<div id="cat_${cat}" style="display:none">
+`;
+
+categorias[cat].forEach((a,i)=>{
+html += `
+<button onclick="agregarAlimentoCategoria('${cat}',${i})">
+${a.n}
+</button>
+`;
 });
-document.getElementById("alimentosBotones").innerHTML=html;
+
+html += `</div></div>`;
+});
+
+document.getElementById("alimentosBotones").innerHTML = html;
 }
 
-function agregarAlimento(index){
-const a = alimentos[index];
-const d = historial[fechaActual];
+function toggleCategoria(cat){
+let el = document.getElementById("cat_"+cat);
+el.style.display = el.style.display === "none" ? "block" : "none";
+}
 
-d.cal += a.c;
-d.prot += a.p;
-d.carb += a.carb;
-d.grasa += a.g;
-d.alimentos.push({...a});
+function agregarAlimentoCategoria(cat,index){
+
+const base = categorias[cat][index];
+let d = historial[fechaActual];
+
+// Detectar si el alimento es por 100g
+let esPor100g = base.n.includes("100g");
+
+// Si es por 100g → pedir gramos
+if(esPor100g){
+
+let gramos = prompt("¿Cuántos gramos consumiste?", "100");
+
+if(!gramos) return;
+
+gramos = parseFloat(gramos);
+
+if(isNaN(gramos) || gramos <= 0){
+alert("Cantidad inválida");
+return;
+}
+
+// Calcular proporcional
+let factor = gramos / 100;
+
+let alimentoCalculado = {
+n: base.n.replace("100g", gramos+"g"),
+c: +(base.c * factor).toFixed(2),
+p: +(base.p * factor).toFixed(2),
+carb: +(base.carb * factor).toFixed(2),
+g: +(base.g * factor).toFixed(2)
+};
+
+d.cal += alimentoCalculado.c;
+d.prot += alimentoCalculado.p;
+d.carb += alimentoCalculado.carb;
+d.grasa += alimentoCalculado.g;
+
+d.alimentos.push(alimentoCalculado);
+
+}else{
+
+// Si es por unidad fija (ej: huevo)
+d.cal += base.c;
+d.prot += base.p;
+d.carb += base.carb;
+d.grasa += base.g;
+
+d.alimentos.push({...base});
+}
 
 guardarTodo();
 render();
-}
-
-function eliminarAlimento(index){
-const d = historial[fechaActual];
-const a = d.alimentos[index];
-
-d.cal -= a.c;
-d.prot -= a.p;
-d.carb -= a.carb;
-d.grasa -= a.g;
-
-d.cal = Math.max(0,d.cal);
-d.prot = Math.max(0,d.prot);
-d.carb = Math.max(0,d.carb);
-d.grasa = Math.max(0,d.grasa);
-
-d.alimentos.splice(index,1);
-guardarTodo();
-render();
-}
-
-function renderListaAlimentos(){
-const d = historial[fechaActual];
-let html="";
-d.alimentos.forEach((a,i)=>{
-html+=`${a.n} <button onclick="eliminarAlimento(${i})">❌</button><br>`;
-});
-document.getElementById("listaAlimentos").innerHTML=html;
 }
 
 /* ================== RUTINA ================== */
