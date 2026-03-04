@@ -87,7 +87,28 @@ let rutinaDia = JSON.parse(localStorage.getItem("rutinaDia")) || {};
 let fechaActual = new Date().toISOString().split("T")[0];
 document.getElementById("fechaSelector").value = fechaActual;
 if(!historial[fechaActual]) crearDia(fechaActual);
+/* ================== AUTO CIERRE A LAS 00:00 ================== */
 
+function obtenerFechaHoy(){
+    return new Date().toISOString().split("T")[0];
+}
+
+function verificarCambioDeDia(){
+    const hoyReal = obtenerFechaHoy();
+    if(hoyReal !== fechaActual){
+        fechaActual = hoyReal;
+        document.getElementById("fechaSelector").value = fechaActual;
+
+        if(!historial[fechaActual]){
+            crearDia(fechaActual);
+        }
+
+        render();
+    }
+}
+
+// Revisa cada 30 segundos si cambió el día
+setInterval(verificarCambioDeDia, 30000);
 /* ================== UTIL ================== */
 function clamp(value,min,max){ return Math.max(min,Math.min(max,value)); }
 function guardarTodo(){
